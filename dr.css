@@ -1,0 +1,313 @@
+/* ===========================
+        Google Fonts
+=========================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@300;400;600&display=swap');
+
+/* ===========================
+        Reset
+=========================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+/* ===========================
+        Background
+=========================== */
+
+body{
+
+    background-image:
+    linear-gradient(rgba(233, 16, 16, 0.45),rgba(0,0,0,.45)),
+    url("assets/background.jpg");
+
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    color:white;
+
+}
+
+/* ===========================
+        Main Box
+=========================== */
+
+.container{
+
+    width:90%;
+    max-width:850px;
+
+    background:rgba(255,255,255,.08);
+
+    backdrop-filter:blur(12px);
+
+    border-radius:25px;
+
+    padding:60px;
+
+    box-shadow:
+
+    0 0 40px rgba(0,0,0,.35);
+
+}
+
+/* ===========================
+        Title
+=========================== */
+
+h1{
+
+    font-family:'Great Vibes',cursive;
+
+    font-size:78px;
+
+    font-weight:400;
+
+    text-align:center;
+
+    margin-bottom:20px;
+
+    color:white;
+
+}
+
+/* ===========================
+        Subtitle
+=========================== */
+
+h2{
+
+    font-family:'Cormorant Garamond',serif;
+
+    font-size:34px;
+
+    text-align:center;
+
+    margin-bottom:45px;
+
+    color:#ffd7d7;
+
+}
+
+/* ===========================
+        Letter
+=========================== */
+
+p{
+
+    font-family:'Cormorant Garamond',serif;
+
+    font-size:30px;
+
+    line-height:60px;
+
+    text-align:center;
+
+}
+
+/* ===========================
+        Colored Words
+=========================== */
+
+.life{
+
+color:#ff8fab;
+
+font-weight:bold;
+
+}
+
+.brighter{
+
+color:#ffd166;
+
+font-weight:bold;
+
+}
+
+.peace{
+
+color:#87cefa;
+
+font-weight:bold;
+
+}
+
+.melody{
+
+color:#d8a7ff;
+
+font-weight:bold;
+
+}
+
+.home{
+
+color:#ffb3c6;
+
+font-weight:bold;
+
+}
+
+.today{
+
+color:#ff4d6d;
+
+font-weight:bold;
+
+}
+
+.tomorrow{
+
+color:#ff758f;
+
+font-weight:bold;
+
+}
+
+.forever{
+
+color:#ff1744;
+
+font-weight:bold;
+
+}
+
+/* ===========================
+        Buttons
+=========================== */
+
+.buttons{
+
+margin-top:60px;
+
+display:flex;
+
+justify-content:center;
+
+gap:25px;
+
+flex-wrap:wrap;
+
+}
+
+.buttons a{
+
+text-decoration:none;
+
+}
+
+button{
+
+padding:14px 34px;
+
+background:transparent;
+
+border:2px solid white;
+
+border-radius:50px;
+
+color:white;
+
+font-size:18px;
+
+font-family:'Cormorant Garamond',serif;
+
+cursor:pointer;
+
+transition:.35s;
+
+}
+
+button:hover{
+
+background:white;
+
+color:black;
+
+transform:translateY(-4px);
+
+box-shadow:
+
+0 0 25px rgba(255,255,255,.5);
+
+}
+
+/* ===========================
+        Responsive
+=========================== */
+
+@media(max-width:768px){
+
+.container{
+
+padding:35px;
+
+}
+
+h1{
+
+font-size:52px;
+
+}
+
+h2{
+
+font-size:24px;
+
+}
+
+p{
+
+font-size:22px;
+
+line-height:42px;
+
+}
+
+button{
+
+width:100%;
+
+}.photo{
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:25px;
+    flex-wrap:wrap;
+    margin:40px 0;
+
+}
+
+.photo img{
+
+    width:45%;
+    max-width:400px;
+
+    border-radius:20px;
+
+    box-shadow:0 10px 35px rgba(0,0,0,.35);
+
+    transition:.4s;
+
+}
+
+.photo img:hover{
+
+    transform:scale(1.03);
+
+}
+
+}
