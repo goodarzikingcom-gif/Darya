@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dreams Together ❤️</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fff0f5, #ffe4e1);
+            min-height: 100vh;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 45px;
+            color: #b03060;
+            margin-bottom: 15px;
+        }
+
+        .header p {
+            font-size: 18px;
+            color: #555;
+        }
+
+        .dreams {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 25px;
+        }
+
+        .dream-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dream-card:hover {
+            transform: translateY(-8px);
+        }
+
+        .number {
+            font-size: 30px;
+            color: #d63384;
+            font-weight: bold;
+        }
+
+        .dream-text {
+            margin-top: 15px;
+            font-size: 17px;
+            color: #444;
+            min-height: 60px;
+        }
+
+        .heart {
+            margin-top: 15px;
+            font-size: 25px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #777;
+            font-size: 18px;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+
+    <div class="header">
+
+        <h1>Dreams Together ❤️</h1>
+
+        <p>
+            40 dreams I want to make real with you.
+        </p>
+
+    </div>
+
+
+    <div class="dreams">
+
+
+        <!-- Dream Cards -->
+
+
+        <div class="dream-card">
+            <div class="number">01</div>
+            <div class="dream-text">
+                Dream 1...
+            </div>
+            <div class="heart">❤️</div>
+        </div>
+
+
+        <div class="dream-card">
+            <div class="number">02</div>
+            <div class="dream-text">
+                Dream 2...
+            </div>
+            <div class="heart">❤️</div>
+        </div>
+
+
+        <!-- 
+        Copy this card until number 40
+        -->
+
+
+        <div class="dream-card">
+            <div class="number">03</div>
+            <div class="dream-text">
+                Dream 3...
+            </div>
+            <div class="heart">❤️</div>
+        </div>
+
+
+        <div class="dream-card">
+            <div class="number">04</div>
+            <div class="dream-text">
+                Dream 4...
+            </div>
+            <div class="heart">❤️</div>
+        </div>
+
+
+        <!-- 05 تا 40 -->
+
+        <script>
+
+            let dreamsContainer = document.querySelector(".dreams");
+
+            for(let i = 5; i <= 40; i++){
+
+                let number = i.toString().padStart(2,'0');
+
+                dreamsContainer.innerHTML += 
+
+                <div class="dream-card">
+
+                    <div class="number">
+                        ${number}
+                    </div>
+
+                    <div class="dream-text">
+                        Dream ${i}...
+                    </div>
+
+                    <div class="heart">
+                        ❤️
+                    </div>
+
+                </div>
+
+                ;
+
+            }
+
+        </script>
+
+
+    </div>
+
+
+    <footer>
+        Our dreams are waiting to become memories ✨
+    </footer>
+
+
+</div>
+
+
+</body>
+</html>

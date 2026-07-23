@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Heart Beats For You ❤️</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+}
+
+body {
+    background: radial-gradient(circle at center, #1a0813 0%, #050106 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    color: #fff;
+    cursor: pointer;
+}
+
+/* متن بالای صفحه */
+.title-box {
+    text-align: center;
+    position: absolute;
+    top: 60px;
+    z-index: 10;
+}
+
+.title-box h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #ff4081, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.title-box p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* کانتینر قلب */
+.heart-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* افکت موج نوری پشت قلب */
+.pulse-ring {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: rgba(233, 30, 99, 0.2);
+    box-shadow: 0 0 50px rgba(233, 30, 99, 0.4);
+    animation: pulseGlow 1.2s infinite ease-in-out;
+}
+
+/* قلب تپنده */
+.heart {
+    font-size: 110px;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 0 25px #e91e63) drop-shadow(0 0 50px #ff4081);
+    animation: heartbeat 1.2s infinite ease-in-out;
+}
+
+/* انیمیشن تپش ریتمیک (مشابه قلب واقعی: دو بار تپش در هر دوره) */
+@keyframes heartbeat {
+    0% { transform: scale(1); }
+    14% { transform: scale(1.25); }
+    28% { transform: scale(1.05); }
+    42% { transform: scale(1.2); }
+    70% { transform: scale(1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pulseGlow {
+    0% { transform: scale(0.9); opacity: 0.3; }
+    50% { transform: scale(1.6); opacity: 0.8; }
+    100% { transform: scale(0.9); opacity: 0.3; }
+}
+
+/* راهنمای کلیک */
+.click-hint {
+    position: absolute;
+    bottom: 50px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px 24px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    transition: opacity 0.5s ease;
+}
+</style>
+</head>
+
+<body onclick="enableHeartbeatSound()">
+
+<div class="title-box">
+    <h1>Listen Closely... ❤️</h1>
+    <p>Every beat belongs to you, Darya.</p>
+</div>
+
+<div class="heart-wrapper">
+    <div class="pulse-ring"></div>
+    <div class="heart">❤️</div>
+</div>
+
+<div class="click-hint" id="hint">
+    🔊 Tap anywhere to enable sound
+</div>
+
+<script>
+// صدای تپش قلب با افکت واقعی
+const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2381/2381-preview.mp3');
+audio.loop = true; // پخش مداوم
+
+let isPlaying = false;
+
+function enableHeartbeatSound() {
+    if (!isPlaying) {
+        audio.play().then(() => {
+            isPlaying = true;
+            document.getElementById('hint').style.opacity = '0'; // محو شدن راهنما
+        }).catch(err => console.log(err));
+    }
+}
+</script>
+
+</body>
+</html>

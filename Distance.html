@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Distance Means Nothing ❤️</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+}
+
+body {
+    background: #0d0b18;
+    color: #fff;
+    /* ساخت ۵۰۰ پیکسل ارتفاع اسکرول برای تجربه حرکت نرم */
+    height: 500vh;
+}
+
+/* کانتینر ثابت در مرکز تصویر */
+.viewport-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* عنوان و توضیحات بالای صفحه */
+.header {
+    text-align: center;
+    position: absolute;
+    top: 60px;
+    z-index: 10;
+    padding: 0 20px;
+}
+
+.header h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #ff80ab, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+}
+
+.header p {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* مسیر اصلی انیمیشن فاصله */
+.stage {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* خط باریک بین دو نقطه */
+.line {
+    position: absolute;
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(233, 30, 99, 0.2), rgba(255, 255, 255, 0.4), rgba(233, 30, 99, 0.2));
+    border-radius: 2px;
+}
+
+/* نقاط در حال حرکت */
+.dot {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #e91e63;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #e91e63, 0 0 30px #ff4081;
+    top: 50%;
+    transform: translateY(-50%);
+    /* استفاده از scroll-driven animation بر اساس timeline صفحه */
+    animation-timeline: scroll(root);
+    animation-fill-mode: forwards;
+}
+
+/* نقطه چپ (نماد تو) */
+.dot-left {
+    left: 10%;
+    animation-name: moveRight;
+}
+
+/* نقطه راست (نماد دریا) */
+.dot-right {
+    right: 10%;
+    animation-name: moveLeft;
+}
+
+/* انیمیشن حرکت نقاط با اسکرول */
+@keyframes moveRight {
+    0% { left: 10%; opacity: 1; }
+    85% { left: 48.5%; opacity: 1; transform: translateY(-50%) scale(1); }
+    100% { left: 48.5%; opacity: 0; transform: translateY(-50%) scale(0); }
+}
+
+@keyframes moveLeft {
+    0% { right: 10%; opacity: 1; }
+    85% { right: 48.5%; opacity: 1; transform: translateY(-50%) scale(1); }
+    100% { right: 48.5%; opacity: 0; transform: translateY(-50%) scale(0); }
+}
+
+/* قلبی که در انتهای اسکرول ظاهر می‌شود */
+.heart {
+    font-size: 70px;
+    position: absolute;
+    opacity: 0;
+    transform: scale(0);
+    animation-name: revealHeart;
+    animation-timeline: scroll(root);
+    animation-fill-mode: forwards;
+    filter: drop-shadow(0 0 20px #e91e63);
+}
+
+@keyframes revealHeart {
+    0%, 80% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.3);
+    }
+}
+
+/* متن انتهای اسکرول */
+.final-text {
+    position: absolute;
+    bottom: 100px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px);
+    animation-name: revealText;
+    animation-timeline: scroll(root);
+    animation-fill-mode: forwards;
+    padding: 0 20px;
+}
+
+.final-text h2 {
+    font-size: 1.8rem;
+    color: #ff80ab;
+    margin-bottom: 8px;
+}
+
+.final-text p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1rem;
+    font-weight: 300;
+}
+
+@keyframes revealText {
+    0%, 85% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* نشانگر راهنمای اسکرول در پایین */
+.scroll-hint {
+    position: absolute;
+    bottom: 30px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1px;
+    animation: bounce 2s infinite;
+}
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+    60% { transform: translateY(-4px); }
+}
+</style>
+</head>
+
+<body>
+
+<div class="viewport-container">
+    
+    <div class="header">
+        <h1>Distance Means Nothing ✨</h1>
+        <p>Keep scrolling to close the distance...</p>
+    </div>
+
+    <div class="stage">
+        <div class="line"></div>
+        <div class="dot dot-left"></div>
+        <div class="dot dot-right"></div>
+        <div class="heart">❤️</div>
+    </div>
+
+    <div class="final-text">
+        <h2>No Matter How Far...</h2>
+        <p>Our hearts will always find each other, Darya. ❤️</p>
+    </div>
+
+    <div class="scroll-hint">
+        ↓ Scroll Down
+    </div>
+
+</div>
+
+</body>
+</html>

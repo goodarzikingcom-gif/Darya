@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Kernel Rebooting... ❤️</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Fira Code', monospace;
+    user-select: none;
+}
+
+body {
+    background: #05050a;
+    color: #00ff66;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+}
+
+/* افکت خطوط تلویزیون قدیمی (CRT Scanline) */
+body::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 10;
+    background-size: 100% 4px, 6px 100%;
+    pointer-events: none;
+}
+
+/* ستاره‌های شناور پس‌زمینه */
+.stars {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle, rgba(0, 255, 102, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 1;
+}
+
+/* پنجره ترمینال */
+.terminal-window {
+    width: 90%;
+    max-width: 700px;
+    height: 420px;
+    background: rgba(10, 15, 12, 0.85);
+    border: 1px solid rgba(0, 255, 102, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0, 255, 102, 0.15), inset 0 0 15px rgba(0, 255, 102, 0.05);
+    backdrop-filter: blur(10px);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* هدر بالای ترمینال */
+.terminal-header {
+    background: rgba(0, 255, 102, 0.08);
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(0, 255, 102, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.button {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.close { background: #ff5f56; }
+.minimize { background: #ffbd2e; }
+.maximize { background: #27c93f; }
+
+.title {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: rgba(0, 255, 102, 0.6);
+    letter-spacing: 1px;
+}
+
+/* بدنه ترمینال */
+.terminal-body {
+    padding: 25px;
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.95rem;
+    line-height: 1.8;
+}
+
+.log-line {
+    opacity: 0.7;
+    margin-bottom: 6px;
+}
+
+.pink-text {
+    color: #ff66b2;
+    text-shadow: 0 0 10px rgba(255, 102, 178, 0.5);
+}
+
+/* پیام اصلی نهایی */
+.final-message {
+    margin-top: 30px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: linear-gradient(45deg, #ff66b2, #00ff66);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(255, 102, 178, 0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 1s ease, transform 1s ease;
+}
+
+.final-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* مکان‌نما (Cursor) */
+.cursor {
+    display: inline-block;
+    width: 8px;
+    height: 18px;
+    background: #00ff66;
+    margin-left: 5px;
+    vertical-align: middle;
+    animation: blink 0.8s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="stars"></div>
+
+<div class="terminal-window">
+    <div class="terminal-header">
+        <div class="button close"></div>
+        <div class="button minimize"></div>
+        <div class="button maximize"></div>
+        <div class="title">darya_core_kernel.exe</div>
+    </div>
+
+    <div class="terminal-body" id="terminalBody">
+        <div id="logs"></div>
+        <div class="final-message" id="finalMsg">
+            [SUCCESS] When I hug you, my soul reboots. ❤️✨
+        </div>
+        <span class="cursor" id="cursor"></span>
+    </div>
+</div>
+
+<script>
+const logsContainer = document.getElementById('logs');
+const finalMsg = document.getElementById('finalMsg');
+const cursor = document.getElementById('cursor');
+// خطوط لودینگ سیستم ترمینال
+const lines = [
+    "> Initializing space-core connection...",
+    "> Locating target: Darya ✨",
+    "> Target found in heart_orbit_01",
+    "> Calibrating emotional frequency...",
+    "> System overload detected: Infinite affection.",
+    "> Executing reboot sequence...",
+    "> Synchronizing heartbeats..."
+];
+
+let lineIndex = 0;
+
+function typeLine() {
+    if (lineIndex < lines.length) {
+        const p = document.createElement('div');
+        p.className = 'log-line';
+        
+        // صورتی کردن خط هدف (دریا)
+        if (lines[lineIndex].includes("Darya")) {
+            p.classList.add('pink-text');
+        }
+        
+        p.textContent = lines[lineIndex];
+        logsContainer.appendChild(p);
+        lineIndex++;
+        setTimeout(typeLine, 600); // تاخیر بین تایپ خطوط
+    } else {
+        // پدیدار شدن پیام اصلی
+        setTimeout(() => {
+            finalMsg.classList.add('show');
+        }, 500);
+    }
+}
+
+// شروع تایپ سیستم
+setTimeout(typeLine, 800);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Darya Compass 🧭✨</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+}
+
+body {
+    background: #090b15;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    background: linear-gradient(45deg, #ff80ab, #ffffff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
+}
+
+.header p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* قاب قطب‌نما */
+.compass-container {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.4) 100%);
+    border: 3px solid rgba(255, 128, 171, 0.3);
+    box-shadow: 0 0 30px rgba(255, 64, 129, 0.2), inset 0 0 20px rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+/* جهت‌های جغرافیایی */
+.label {
+    position: absolute;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.label.n { top: 12px; }
+.label.e { right: 15px; }
+.label.s { bottom: 12px; }
+.label.w { left: 15px; }
+
+/* جهت اصلی: DARYA */
+.label.darya-target {
+    top: -35px;
+    font-size: 1.1rem;
+    color: #ff4081;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px #ff4081;
+}
+
+/* عقربه قطب‌نما */
+.needle {
+    position: absolute;
+    width: 12px;
+    height: 180px;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* نوک صورتی اشاره‌گر به سمت دریا */
+.needle-top {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 90px solid #ff4081;
+    filter: drop-shadow(0 0 8px #ff4081);
+}
+
+/* نوک پایین عقربه */
+.needle-bottom {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 90px solid rgba(255, 255, 255, 0.2);
+}
+
+/* نقطه مرکز قطب‌نما */
+.center-node {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ff4081;
+    border: 3px solid #ff4081;
+    z-index: 5;
+}
+
+/* حالت‌های تفریحی / فعالیتی (دکمه‌ها) */
+.activities {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.act-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 12px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.act-btn:hover, .act-btn.active {
+    background: rgba(255, 64, 129, 0.2);
+    border-color: #ff4081;
+    box-shadow: 0 5px 15px rgba(255, 64, 129, 0.3);
+    transform: translateY(-2px);
+}
+
+/* نمایش وضعیت فعال */
+.status-box {
+    margin-top: 25px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    min-height: 45px;
+}
+
+.highlight {
+    color: #ff80ab;
+    font-weight: 600;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>The Ultimate Compass 🧭</h1>
+    <p>No matter what activity you choose, it always leads to Darya.</p>
+</div>
+<div class="compass-container" id="compass">
+    <div class="label darya-target">DARYA ❤️</div>
+    <div class="label n">N</div>
+    <div class="label e">E</div>
+    <div class="label s">S</div>
+    <div class="label w">W</div>
+
+    <div class="needle" id="needle">
+        <div class="needle-top"></div>
+        <div class="needle-bottom"></div>
+    </div>
+    <div class="center-node"></div>
+</div>
+
+<div class="activities">
+    <button class="act-btn" onclick="setActivity('judo', 45)">🥋 Judo</button>
+    <button class="act-btn" onclick="setActivity('shooting', 120)">🎯 Shooting</button>
+    <button class="act-btn" onclick="setActivity('workout', 220)">🏃‍♀️ Workout</button>
+    <button class="act-btn" onclick="setActivity('party', 300)">🥳 Party</button>
+</div>
+
+<div class="status-box" id="statusBox">
+    Select an activity to test the compass... ✨
+</div>
+
+<script>
+const needle = document.getElementById('needle');
+const statusBox = document.getElementById('statusBox');
+
+// پیام‌ها و واکنش‌های مربوط به هر فعالیت
+const messages = {
+    judo: "Practicing <span class='highlight'>Judo</span>... but all moves lead straight back to Darya! 🥋❤️",
+    shooting: "At the <span class='highlight'>Shooting</span> range... aim is set 100% on Darya's heart! 🎯✨",
+    workout: "<span class='highlight'>Working out</span>... gaining strength to hug Darya tighter! 🏃‍♀️💪",
+    party: "At the <span class='highlight'>Party</span>... but Darya is still the main vibe! 🥳💖"
+};
+
+function setActivity(type, tempAngle) {
+    // همه دکمه‌ها را به حالت عادی ببر
+    document.querySelectorAll('.act-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+
+    // ابتدا قطب‌نما کمی سردرگم می‌چرخد (شبیه‌سازی چرخش)
+    needle.style.transform = rotate(${tempAngle + 720}deg);
+
+    // متن وضعیت را آپدیت کن
+    statusBox.innerHTML = messages[type];
+
+    // بعد از ۱ ثانیه، عقربه دوباره صاف به سمت بالا (دریا) بازمی‌گردد!
+    setTimeout(() => {
+        needle.style.transform = rotate(0deg);
+    }, 800);
+}
+
+// راز اضافی: اگر موشواره روی قطب‌نما برود، عقربه کمی هیجان‌زده لرزش ایجاد می‌کند!
+const compass = document.getElementById('compass');
+compass.addEventListener('mousemove', () => {
+    const randomShake = (Math.random() - 0.5) * 15;
+    needle.style.transform = rotate(${randomShake}deg);
+});
+
+compass.addEventListener('mouseleave', () => {
+    needle.style.transform = rotate(0deg);
+});
+</script>
+
+</body>
+</html>
