@@ -1,0 +1,185 @@
+* {
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+  user-select: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1f0512 0%, #3b0764 50%, #4c0519 100%);
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-x: hidden;
+  counter-reset: loveTemp 36;
+}
+
+.temp-check {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* افزایش درجه حرارت */
+#t1:checked { counter-increment: loveTemp 14; }
+#t2:checked { counter-increment: loveTemp 30; }
+#t3:checked { counter-increment: loveTemp 50; }
+#t4:checked { counter-increment: loveTemp 80; }
+#t5:checked { counter-increment: loveTemp 120; }
+#t6:checked { counter-increment: loveTemp 200; }
+#t7:checked { counter-increment: loveTemp 300; }
+#t8:checked { counter-increment: loveTemp 500; }
+
+.main-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  border-radius: 32px;
+  padding: 30px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  color: #fda4af;
+}
+
+.subtitle {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+.temp-display::after {
+  content: counter(loveTemp) " °C";
+  font-size: 42px;
+  font-weight: 900;
+  color: #ff4365;
+  text-shadow: 0 0 20px rgba(255, 67, 101, 0.8);
+  display: block;
+  margin-bottom: 15px;
+}
+
+.thermometer-wrapper {
+  position: relative;
+  width: 40px;
+  height: 220px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  padding: 5px;
+  margin-bottom: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+}
+
+.thermometer-bulb {
+  position: absolute;
+  bottom: -22px;
+  width: 58px;
+  height: 58px;
+  background: #ff4365;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 20px #ff4365;
+  z-index: 2;
+}
+
+.mercury {
+  width: 100%;
+  height: 8%;
+  background: linear-gradient(to top, #ff4365, #ff758c);
+  border-radius: 12px;
+  box-shadow: 0 0 15px #ff4365;
+  z-index: 1;
+}
+
+/* پر شدن ترمومتر */
+#t1:checked ~ .main-card .mercury { height: 20%; }
+#t2:checked ~ .main-card .mercury { height: 32%; }
+#t3:checked ~ .main-card .mercury { height: 46%; }
+#t4:checked ~ .main-card .mercury { height: 60%; }
+#t5:checked ~ .main-card .mercury { height: 75%; }
+#t6:checked ~ .main-card .mercury { height: 88%; }
+#t7:checked ~ .main-card .mercury { height: 96%; }
+#t8:checked ~ .main-card .mercury { 
+  height: 100%; 
+  background: linear-gradient(to top, #ff0000, #ff7300);
+  box-shadow: 0 0 30px #ff0000;
+}
+
+.btn-container {
+  position: relative;
+  width: 100%;
+  height: 55px;
+  margin-top: 15px;
+}
+
+.btn-heat {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #ff4365, #ff0055);
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(255, 67, 101, 0.5);
+  border: none;
+}
+
+.btn-heat:hover {
+  transform: scale(1.03);
+  box-shadow: 0 10px 30px rgba(255, 67, 101, 0.8);
+}
+
+.l1 { display: flex; }
+
+#t1:checked ~ .main-card .l1 { display: none; }
+#t1:checked ~ .main-card .l2 { display: flex; }
+
+#t2:checked ~ .main-card .l2 { display: none; }
+#t2:checked ~ .main-card .l3 { display: flex; }
+
+#t3:checked ~ .main-card .l3 { display: none; }
+#t3:checked ~ .main-card .l4 { display: flex; }
+
+#t4:checked ~ .main-card .l4 { display: none; }
+#t4:checked ~ .main-card .l5 { display: flex; }
+
+#t5:checked ~ .main-card .l5 { display: none; }
+#t5:checked ~ .main-card .l6 { display: flex; }
+#t6:checked ~ .main-card .l6 { display: none; }
+#t6:checked ~ .main-card .l7 { display: flex; }
+
+#t7:checked ~ .main-card .l7 { display: none; }
+#t7:checked ~ .main-card .l8 { display: flex; }
+
+#t8:checked ~ .main-card .l8 { 
+  background: linear-gradient(135deg, #ff0000, #ff7300);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.05); }
+}
