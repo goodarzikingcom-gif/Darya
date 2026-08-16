@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Darya</title>
+<style>
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        height: 100vh;
+        overflow: hidden;
+        background: radial-gradient(circle at 50% 20%, #fffaf0 0%, #f5ead8 35%, #dfc9a8 100%);
+        font-family: Georgia, "Times New Roman", serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
+
+    .scene {
+        position: relative;
+        width: 92vw;
+        max-width: 900px;
+        height: 90vh;
+        overflow: hidden;
+        background: linear-gradient(rgba(255,255,255,.2), rgba(255,255,255,.05));
+        border: 1px solid rgba(80,60,40,.15);
+        box-shadow: 0 30px 80px rgba(70,50,30,.25);
+        backdrop-filter: blur(4px);
+    }
+
+    .top { position: absolute; top: 30px; left: 40px; z-index: 30; color: #493c2c; }
+    .small { font-family: Arial, sans-serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; opacity: .6; }
+    .title { margin-top: 8px; font-size: 30px; font-weight: normal; letter-spacing: -1px; }
+
+    /* Roof */
+    .roof {
+        position: absolute;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 15;
+        width: 260px;
+    }
+    .roof-tier {
+        position: relative;
+        height: 30px;
+        background: linear-gradient(180deg, #e8b354, #b8791f);
+        clip-path: polygon(0% 100%, 8% 0%, 92% 0%, 100% 100%);
+        box-shadow: 0 6px 14px rgba(90,50,10,.35);
+        border-bottom: 2px solid #7a4a12;
+    }
+    .roof-tier.top2 { width: 82%; margin: 0 auto -4px; }
+    .roof-tier.top1 { width: 100%; }
+    .roof-cap {
+        width: 26px; height: 26px;
+        background: #7a2b20;
+        margin: 0 auto -2px;
+        border-radius: 4px 4px 0 0;
+    }
+
+    /* Character curtain */
+    .curtain {
+        position: absolute;
+        top: 130px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 70%;
+        max-width: 620px;
+        height: 62%;
+        z-index: 10;
+        pointer-events: none;
+    }
+    .chime-col {
+        position: absolute;
+        top: 0;
+        transform-origin: top center;
+        animation: swing 4.5s ease-in-out infinite;
+        animation-delay: var(--delay);
+    }
+    .chime-char {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Noto Serif SC", "Microsoft YaHei", serif;
+        font-size: 13px;
+        color: #4a3a28;
+        white-space: nowrap;
+    }
+
+    @keyframes swing {
+        0%   { transform: rotate(-2.5deg); }
+        50%  { transform: rotate(2.5deg); }
+        100% { transform: rotate(-2.5deg); }
+    }
+
+    .message {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 20;
+        text-align: center;
+        color: #3b3024;
+        pointer-events: none;
+        width: 90%;
+    }
+
+    .message .chinese {
+        font-family: "Noto Serif SC", "Microsoft YaHei", serif;
+        font-size: clamp(26px, 6vw, 56px);
+        letter-spacing: 4px;
+        background: rgba(255,250,240,.75);
+        padding: 6px 18px;
+        border-radius: 6px;
+        text-shadow: 0 3px 15px rgba(0,0,0,.12);
+    }
+
+    .message .english {
+        margin-top: 15px;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        letter-spacing: 5px;
+        text-transform: uppercase;
+        opacity: .5;
+    }
+
+    .bottom {
+        position: absolute;
+        bottom: 25px; left: 50%;
+        transform: translateX(-50%);
+        z-index: 20;
+        text-align: center;
+        color: #594936;
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+        letter-spacing: 3px;
+        opacity: .55;
+        white-space: nowrap;
+    }
+    .music {
+        position: absolute;
+        top: 30px; right: 35px;
+        z-index: 30;
+        width: 45px; height: 45px;
+        border-radius: 50%;
+        border: 1px solid rgba(70,50,30,.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        font-size: 17px;
+        color: #493c2c;
+        transition: .3s;
+        background: rgba(255,255,255,.25);
+    }
+
+    .music.playing { animation: rotate 2s linear infinite; background: rgba(70,50,30,.12); }
+
+    @keyframes rotate { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+    .heart {
+        position: fixed;
+        pointer-events: none;
+        font-size: 16px;
+        animation: floatUp 4s linear forwards;
+        z-index: 100;
+    }
+
+    @keyframes floatUp {
+        0%   { transform: translateY(0) scale(.7); opacity: 0; }
+        20%  { opacity: 1; }
+        100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+    }
+
+    @media (max-width: 600px) {
+        .scene { width: 94vw; height: 92vh; }
+        .top { left: 22px; top: 20px; }
+        .title { font-size: 24px; }
+        .music { right: 20px; top: 18px; }
+        .roof { width: 180px; top: 45px; }
+        .curtain { top: 95px; width: 84%; }
+        .message .chinese { font-size: 30px; letter-spacing: 2px; padding: 4px 10px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="scene">
+
+    <div class="top">
+        <div class="small">A little surprise</div>
+        <div class="title">For Darya</div>
+    </div>
+
+    <div class="music" id="musicButton">♫</div>
+
+    <div class="roof">
+        <div class="roof-tier top1"></div>
+        <div class="roof-tier top2"></div>
+        <div class="roof-cap"></div>
+    </div>
+
+    <div class="curtain" id="curtain"></div>
+
+    <div class="message">
+        <div class="chinese">我爱你，德里亚 ❤️</div>
+        <div class="english">I will always choose you</div>
+    </div>
+
+    <div class="bottom">CLICK ANYWHERE • PLAY MUSIC • FOR YOU</div>
+
+</div>
+
+<audio id="music" loop>
+    <source src="love.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const music = document.getElementById("music");
+const button = document.getElementById("musicButton");
+const curtain = document.getElementById("curtain");
+let playing = false;
+let heartsInterval = null;
+
+// characters used to build the hanging curtain
+const chars = "我爱你德里亚永远选择爱心".split("");
+
+// build columns in a bell shape (tall in the middle, short at the edges)
+const totalCols = 32;
+for (let c = 0; c < totalCols; c++) {
+    const frac = c / (totalCols - 1);           // 0 -> 1 across the width
+    const centered = Math.abs(frac - 0.5) * 2;   // 0 at center, 1 at edges
+    const rows = Math.round(16 * (1 - Math.pow(centered, 1.4)) + 3);
+
+    const col = document.createElement("div");
+    col.className = "chime-col";
+    col.style.left = (frac * 100) + "%";
+    col.style.setProperty("--delay", (Math.random() * 2).toFixed(2) + "s");
+
+    for (let r = 0; r < rows; r++) {
+        const ch = document.createElement("span");
+        ch.className = "chime-char";
+        ch.textContent = chars[Math.floor(Math.random() * chars.length)];
+        ch.style.top = (r * 20) + "px";
+        ch.style.opacity = Math.max(0.12, 1 - r / rows);
+        col.appendChild(ch);
+    }
+    curtain.appendChild(col);
+}
+
+document.body.addEventListener("click", function () {
+    if (playing) return;
+
+    music.play()
+        .then(() => {
+            playing = true;
+            button.classList.add("playing");
+            startHearts();
+        })
+        .catch(function (error) {
+            console.log("Music error:", error);
+            playing = true;
+            button.classList.add("playing");
+            startHearts();
+        });
+});
+
+function startHearts() {
+    if (heartsInterval) return;
+    heartsInterval = setInterval(function () {
+        const heart = document.createElement("div");
+        heart.className = "heart";
+        heart.innerHTML = Math.random() > .5 ? "♥" : "♡";
+        heart.style.left = Math.random() * 100 + "vw";
+        heart.style.bottom = "-20px";
+        heart.style.color = "#8b5e55";
+        document.body.appendChild(heart);
+
+        setTimeout(function () { heart.remove(); }, 4000);
+    }, 700);
+}
+
+function tiltColumns(x) {
+    document.querySelectorAll(".chime-col").forEach(function (col, index) {
+        const amount = x * (6 + (index % 5));
+        col.style.transform = "rotate(" + amount + "deg)";
+    });
+}
+
+document.addEventListener("mousemove", function (event) {
+    const x = (event.clientX / window.innerWidth) - .5;
+    tiltColumns(x);
+});
+
+document.addEventListener("touchmove", function (event) {
+    const x = (event.touches[0].clientX / window.innerWidth) - .5;
+    tiltColumns(x);
+}, { passive: true });
+</script>
+
+</body>
+</html>

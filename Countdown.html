@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Darya ❤️</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #000;
+    overflow: hidden;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+/* Matrix background */
+#matrix {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+}
+
+/* Main screen */
+.screen {
+    position: relative;
+    z-index: 2;
+
+    width: 100%;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    color: #ff4fa3;
+}
+
+/* I LOVE YOU */
+.loveText {
+    font-size: clamp(20px, 4vw, 42px);
+    font-weight: bold;
+
+    color: #ff69b4;
+
+    text-shadow:
+        0 0 5px #ff1493,
+        0 0 15px #ff1493,
+        0 0 30px #ff1493;
+
+    margin-bottom: 20px;
+
+    opacity: 0;
+    transform: translateY(-20px);
+
+    transition: 0.6s ease;
+}
+
+.loveText.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Countdown number */
+#number {
+    font-size: clamp(100px, 25vw, 250px);
+    font-weight: bold;
+
+    color: white;
+
+    text-shadow:
+        0 0 5px white,
+        0 0 15px #ffb6d9,
+        0 0 35px #ff1493,
+        0 0 70px #ff1493;
+
+    transition: 0.4s;
+}
+
+/* Heart screen */
+#heartScreen {
+    position: absolute;
+    inset: 0;
+
+    display: none;
+
+    justify-content: center;
+    align-items: center;
+
+    z-index: 5;
+}
+
+.heart {
+    position: relative;
+
+    width: 280px;
+    height: 250px;
+
+    animation: heartbeat 1.2s infinite;
+}
+
+/* Heart shape */
+.heart::before,
+.heart::after {
+    content: "";
+    position: absolute;
+
+    top: 0;
+
+    width: 145px;
+    height: 230px;
+
+    background: #ff1493;
+
+    border-radius: 100px 100px 0 0;
+
+    box-shadow:
+        0 0 15px #ff1493,
+        0 0 35px #ff1493,
+        0 0 70px #ff1493;
+}
+
+.heart::before {
+    left: 140px;
+    transform: rotate(45deg);
+    transform-origin: 0 100%;
+}
+
+.heart::after {
+    left: 0;
+    transform: rotate(-45deg);
+    transform-origin: 100% 100%;
+}
+
+/* Text inside heart */
+.heartText {
+    position: absolute;
+
+    z-index: 10;
+
+    width: 100%;
+
+    top: 105px;
+
+    text-align: center;
+
+    color: white;
+
+    font-size: 22px;
+    font-weight: bold;
+
+    text-shadow:
+        0 0 5px #fff,
+        0 0 15px #ff69b4;
+
+    transform: rotate(0deg);
+}
+
+/* Heartbeat */
+@keyframes heartbeat {
+
+    0%, 100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.12);
+    }
+}
+
+/* Floating hearts */
+.floatingHeart {
+    position: fixed;
+
+    color: #ff69b4;
+
+    font-size: 20px;
+
+    z-index: 1;
+
+    pointer-events: none;
+
+    animation: floatUp 5s linear forwards;
+}
+
+@keyframes floatUp {
+
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(-110vh) scale(1.5);
+        opacity: 0;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+<!-- Matrix canvas -->
+<canvas id="matrix"></canvas>
+
+
+<!-- Countdown -->
+<div class="screen" id="countdownScreen">
+
+    <div class="loveText" id="loveText">
+        I Love You ❤️
+    </div>
+
+    <div id="number">
+        10
+    </div>
+
+</div>
+
+
+<!-- Final heart -->
+<div id="heartScreen">
+
+    <div class="heart">
+
+        <div class="heartText">
+            I will always<br>
+            choose you, Darya. ❤️
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   MATRIX BACKGROUND
+========================= */
+
+const canvas = document.getElementById("matrix");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const letters =
+"LOVE DARYA I LOVE YOU ❤️ 010101 C++ HTML";
+
+const fontSize = 16;
+
+let columns =
+Math.floor(canvas.width / fontSize);
+
+let drops = [];
+
+for (let i = 0; i < columns; i++) {
+    drops[i] = Math.random() * -100;
+}
+
+
+function drawMatrix() {
+
+    ctx.fillStyle = "rgba(0,0,0,0.08)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+        const text =
+            letters[Math.floor(Math.random() * letters.length)];
+
+        ctx.fillStyle =
+            Math.random() > 0.15
+            ? "#ff1493"
+            : "#ffffff";
+
+        ctx.fillText(
+            text,
+            i * fontSize,
+            drops[i] * fontSize
+        );
+
+        if (
+            drops[i] * fontSize > canvas.height &&
+            Math.random() > 0.975
+        ) {
+            drops[i] = 0;
+        }
+
+        drops[i]++;
+    }
+}
+
+setInterval(drawMatrix, 35);
+
+
+/* =========================
+   COUNTDOWN
+========================= */
+
+const number = document.getElementById("number");
+const loveText = document.getElementById("loveText");
+
+let count = 10;
+
+
+/* Show "I Love You" */
+
+setTimeout(() => {
+    loveText.classList.add("show");
+}, 500);
+
+
+function countdown() {
+
+    number.style.transform = "scale(1.3)";
+    number.style.opacity = "0";
+
+    setTimeout(() => {
+
+        count--;
+
+        if (count > 0) {
+
+            number.textContent = count;
+
+            number.style.transform = "scale(1)";
+            number.style.opacity = "1";
+
+            setTimeout(countdown, 1000);
+
+        } else {
+
+            showHeart();
+
+        }
+
+    }, 300);
+}
+
+
+/* Start countdown */
+
+setTimeout(countdown, 1000);
+
+
+/* =========================
+   FINAL HEART
+========================= */
+
+function showHeart() {
+
+    document.getElementById("countdownScreen")
+        .style.display = "none";
+
+    document.getElementById("heartScreen")
+        .style.display = "flex";
+
+    createFloatingHearts();
+}
+
+
+/* =========================
+   FLOATING HEARTS
+========================= */
+
+function createFloatingHearts() {
+
+    setInterval(() => {
+
+        const heart =
+            document.createElement("div");
+
+        heart.className = "floatingHeart";
+
+        heart.textContent =
+            Math.random() > 0.5
+            ? "❤️"
+            : "♥";
+
+        heart.style.left =
+            Math.random() * 100 + "vw";
+
+        heart.style.bottom =
+            "-30px";
+
+        heart.style.fontSize =
+            15 + Math.random() * 30 + "px";
+
+        heart.style.animationDuration =
+            3 + Math.random() * 4 + "s";
+
+        document.body.appendChild(heart);
+
+
+        setTimeout(() => {
+            heart.remove();
+        }, 7000);
+
+    }, 250);
+}
+
+
+/* Resize */
+
+window.addEventListener("resize", () => {
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    columns =
+        Math.floor(canvas.width / fontSize);
+
+    drops = [];
+
+    for (let i = 0; i < columns; i++) {
+        drops[i] = Math.random() * -100;
+    }
+
+});
+
+</script>
+
+</body>
+</html>

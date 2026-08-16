@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>SQL Query - Darya</title>
+    <style>
+        :root {
+            --neon-blue: #00f2ff;
+            --bg-dark: #0a0a0c;
+            --panel-bg: #16161a;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .terminal-window {
+            width: 600px;
+            background: var(--panel-bg);
+            border-top: 4px solid var(--neon-blue);
+            box-shadow: 0 10px 40px rgba(0, 242, 255, 0.2);
+            padding: 30px;
+            position: relative;
+        }
+
+        .terminal-header {
+            font-size: 12px;
+            color: var(--neon-blue);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .code-container {
+            font-size: 18px;
+            color: #fff;
+            border-left: 2px solid var(--neon-blue);
+            padding-left: 15px;
+        }
+
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid var(--neon-blue);
+            white-space: nowrap;
+            width: 38ch;
+            animation: typing 3s steps(38, end) forwards, blink 0.75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 38ch; }
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--neon-blue); }
+        }
+
+        .result-panel {
+            margin-top: 40px;
+            border: 1px solid #333;
+            width: 540px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
+            animation-delay: 3.5s;
+        }
+
+        .result-panel::before {
+            content: "QUERY RESULT";
+            display: block;
+            font-size: 10px;
+            color: var(--neon-blue);
+            margin-bottom: 10px;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="terminal-window">
+        <div class="terminal-header">sql_executor@darya_db:~$</div>
+        <div class="code-container">
+            <pre class="typewriter">SELECT heart_status FROM love WHERE to='Darya';</pre>
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <span style="font-size: 24px; color: var(--neon-blue);">I LOVE DARYA ❤️</span>
+    </div>
+
+</body>
+</html>

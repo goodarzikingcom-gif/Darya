@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Love, Darya</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* ستاره‌های پس‌زمینه */
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: 
+                radial-gradient(2px 2px at 30px 40px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1.5px 1.5px at 100px 150px, #94a3b8, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 200px 80px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 350px 350px;
+            animation: twinkle 8s linear infinite;
+            opacity: 0.8;
+        }
+
+        @keyframes twinkle {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-350px); }
+        }
+
+        /* شمارش معکوس */
+        .countdown {
+            position: absolute;
+            font-size: 130px;
+            font-weight: bold;
+            color: #f43f5e;
+            text-shadow: 0 0 30px rgba(244, 63, 94, 0.8);
+            animation: showStep 1s ease-in-out forwards;
+        }
+        .c-3 { animation-delay: 0s; }
+        .c-2 { animation-delay: 1s; opacity: 0; }
+        .c-1 { animation-delay: 2s; opacity: 0; }
+
+        @keyframes showStep {
+            0% { opacity: 0; transform: scale(0.4); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1.6); }
+        }
+
+        /* محتوای اصلی و قوها */
+        .final-content {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: revealScene 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 3s forwards;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        @keyframes revealScene {
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .swans-container {
+            position: relative;
+            width: 220px;
+            height: 140px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: floatSwans 3.5s ease-in-out infinite;
+        }
+
+        @keyframes floatSwans {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .swan {
+            font-size: 70px;
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
+        }
+        .swan-left { transform: scaleX(-1) rotate(-15deg); }
+        .swan-right { transform: rotate(15deg); }
+
+        .center-heart {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            width: 35px;
+            height: 35px;
+            background-color: #f43f5e;
+            transform: translateX(-50%) rotate(-45deg);
+            box-shadow: 0 0 25px #f43f5e;
+            animation: heartbeat 1.2s infinite;
+        }
+        .center-heart::before, .center-heart::after {
+            content: "";
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background-color: #f43f5e;
+            border-radius: 50%;
+        }
+        .center-heart::before { top: -17.5px; left: 0; }
+        .center-heart::after { left: 17.5px; top: 0; }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: translateX(-50%) rotate(-45deg) scale(1); }
+            50% { transform: translateX(-50%) rotate(-45deg) scale(1.2); }
+        }
+        .message {
+            margin-top: 20px;
+            color: #f8fafc;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(244, 63, 94, 0.8);
+        }
+
+        .hint {
+            margin-top: 8px;
+            color: #94a3b8;
+            font-size: 13px;
+            animation: pulseHint 1.5s infinite;
+        }
+
+        @keyframes pulseHint {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+
+        /* استایل پنجره نامه عاشقانه */
+        .letter-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .letter-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .letter-card {
+            background: #1e1b4b;
+            border: 2px solid #f43f5e;
+            padding: 30px;
+            width: 80%;
+            max-width: 450px;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(244, 63, 94, 0.4);
+            color: #f8fafc;
+            text-align: center;
+            transform: scale(0.7);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .letter-modal.show .letter-card {
+            transform: scale(1);
+        }
+
+        .letter-card h2 {
+            color: #f43f5e;
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        .letter-card p {
+            font-size: 15px;
+            line-height: 1.8;
+            text-align: right;
+            direction: rtl;
+            margin: 20px 0;
+        }
+
+        .close-btn {
+            background: #f43f5e;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stars"></div>
+
+    <!-- شمارش معکوس -->
+    <div class="countdown c-3">3</div>
+    <div class="countdown c-2">2</div>
+    <div class="countdown c-1">1</div>
+
+    <!-- صحنه اصلی (با قابلیت کلیک برای باز شدن نامه) -->
+    <div class="final-content" onclick="openLetter()">
+        <div class="swans-container">
+            <div class="swan swan-left">🦢</div>
+            <div class="center-heart"></div>
+            <div class="swan swan-right">🦢</div>
+        </div>
+        <div class="message">My beautiful swan, Darya 🤍</div>
+        <div class="hint">( برای خواندن نامه روی صفحه کلیک کن )</div>
+    </div>
+
+    <!-- باکس نامه عاشقانه -->
+    <div class="letter-modal" id="letterModal">
+        <div class="letter-card">
+            <h2>برای دریای عزیزِ من 🤍</h2>
+            <p>
+                درست مثل این قوهای زیبا که نماد عشق و وفاداری‌ان، تو هم زیباترین بخش زندگی منی. هر لحظه با تو بودن مثل یک رویای قشنگه. ممنونم که هستی و دنیام رو قشنگ‌تر کردی...
+            </p>
+            <button class="close-btn" onclick="closeLetter(event)">بستن نامه</button>
+        </div>
+    </div>
+
+    <script>
+        function openLetter() {
+            document.getElementById('letterModal').classList.add('show');
+        }
+
+        function closeLetter(event) {
+            event.stopPropagation(); // جلوگیری از تداخل کلیک
+            document.getElementById('letterModal').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

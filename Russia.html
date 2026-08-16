@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сюрприз для тебя</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #050814; /* پس‌زمینه شب‌های سرد روسیه */
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* افکت بارش برف زمستانی (CSS Pure Snow) */
+        .snowflakes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 90px 40px, #ddd, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, #fff, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: snow 10s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes snow {
+            0% { background-position: 0px 0px; }
+            100% { background-position: 0px 200px; }
+        }
+
+        /* انیمیشن شمارش معکوس ۳ */
+        .countdown-3 {
+            position: absolute;
+            font-size: 120px;
+            color: #fff;
+            text-shadow: 0 0 20px #ff3366;
+            animation: showStep3 1s ease-in-out forwards;
+        }
+
+        /* انیمیشن شمارش معکوس ۲ */
+        .countdown-2 {
+            position: absolute;
+            font-size: 120px;
+            color: #fff;
+            text-shadow: 0 0 20px #ff3366;
+            opacity: 0;
+            animation: showStep2 1s ease-in-out 1s forwards;
+        }
+
+        /* انیمیشن شمارش معکوس ۱ */
+        .countdown-1 {
+            position: absolute;
+            font-size: 120px;
+            color: #fff;
+            text-shadow: 0 0 20px #ff3366;
+            opacity: 0;
+            animation: showStep1 1s ease-in-out 2s forwards;
+        }
+
+        @keyframes showStep3 {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        @keyframes showStep2 {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        @keyframes showStep1 {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        /* محتوای نهایی (قلب و متن) */
+        .final-content {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: revealHeart 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 3s forwards;
+        }
+
+        @keyframes revealHeart {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* طراحی قلب با خالص CSS */
+        .heart {
+            position: relative;
+            width: 100px;
+            height: 90px;
+            animation: heartbeat 1.2s infinite;
+        }
+
+        .heart::before,
+        .heart::after {
+            position: absolute;
+            content: "";
+            left: 50px;
+            top: 0;
+            width: 50px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff3366, #ff0033);
+            border-radius: 50px 50px 0 0;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.8);
+        }
+        .heart::after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* متن روسی نهایی */
+        .message {
+            margin-top: 30px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(255, 51, 102, 0.9);
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- افکت برف در پس‌زمینه -->
+    <div class="snowflakes"></div>
+
+    <!-- مراحل شمارش معکوس با زبان روسی -->
+    <div class="countdown-3">3<br><span style="font-size: 30px;">Три</span></div>
+    <div class="countdown-2">2<br><span style="font-size: 30px;">Два</span></div>
+    <div class="countdown-1">1<br><span style="font-size: 30px;">Один</span></div>
+
+    <!-- نتیجه نهایی پس از اتمام شمارش معکوس -->
+    <div class="final-content">
+        <div class="heart"></div>
+        <div class="message">Я тебя люблю, Дарья ❤</div>
+    </div>
+
+</body>
+</html>

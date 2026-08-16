@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>JavaScript Console - Darya</title>
+    <style>
+        :root {
+            --purple-glow: #b224ef;
+            --purple-deep: #7579ff;
+            --bg-dark: #0d0714;
+            --panel-bg: rgba(25, 10, 45, 0.75);
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1f0c3f 0%, var(--bg-dark) 100%);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* ویجت با استایل مدرن شیشه‌ای (Glassmorphism) */
+        .glass-window {
+            width: 640px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(179, 36, 239, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(179, 36, 239, 0.15);
+            padding: 30px;
+            position: relative;
+        }
+
+        .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+        }
+
+        .window-title {
+            font-size: 13px;
+            color: #d8b4fe;
+            letter-spacing: 1px;
+        }
+
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--purple-glow);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--purple-glow);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 15px var(--purple-glow); }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .code-container {
+            font-size: 16px;
+            color: #9cdcfe;
+            line-height: 1.6;
+        }
+
+        .comment {
+            color: #8c82a9;
+            font-style: italic;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .keyword { color: #c586c0; }
+        .variable { color: #4fc1ff; }
+
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid var(--purple-glow);
+            white-space: nowrap;
+            width: 48ch;
+            animation: typing 3.5s steps(48, end) forwards, blink 0.75s step-end infinite;
+            color: #ce9178;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 48ch; }
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--purple-glow); }
+        }
+
+        /* پنل خروجی با افکت محو شونده زیبا */
+        .output-panel {
+            margin-top: 35px;
+            width: 580px;
+            padding: 20px;
+            background: rgba(117, 121, 255, 0.05);
+            border: 1px dashed rgba(117, 121, 255, 0.3);
+            border-radius: 8px;
+            text-align: center;
+            opacity: 0;
+            animation: fadeInOutput 0.8s ease-in-out forwards;
+            animation-delay: 3.8s;
+        }
+
+        @keyframes fadeInOutput {
+            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="glass-window">
+        <div class="window-header">
+            <span class="window-title">darya_universe.js — Live Runtime</span>
+            <div class="pulse-dot"></div>
+        </div>
+        
+        <div class="code-container">
+            <span class="comment">// دریا، تو زیباترین باگِ شیرینِ دنیای منی که هیچ‌وقت دلم نمی‌خواد فیکسش کنم! 💜</span>
+            <span class="keyword">const</span> <span class="variable">daryaEffect</span> = <span class="keyword">()</span> => <span class="string">"Infinite Happiness"</span>;<br>
+            <span class="typewriter">console.log("Darya, you are the core logic of my world ✨");</span>
+        </div>
+    </div>
+
+    <div class="output-panel">
+        <span style="font-size: 19px; color: #e879f9; font-weight: bold;">
+            🌌 خروجی: دریا، تو تنها کسی هستی که دلم می خواهد بیشتر از دیروز دوستت داشته باشم. 💜
+        </span>
+    </div>
+
+</body>
+</html>

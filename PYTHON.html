@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Python Console - Darya</title>
+    <style>
+        :root {
+            --python-green: #4ffd84;
+            --bg-dark: #0f1410;
+            --panel-bg: #151b16;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* استایل متمایز با قاب سبز و سایه ملایم */
+        .python-window {
+            width: 620px;
+            background: var(--panel-bg);
+            border: 1px solid rgba(79, 253, 132, 0.3);
+            border-radius: 6px;
+            box-shadow: 0 10px 40px rgba(79, 253, 132, 0.1);
+            padding: 25px;
+            position: relative;
+        }
+
+        .python-header {
+            font-size: 13px;
+            color: var(--python-green);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed rgba(79, 253, 132, 0.2);
+            padding-bottom: 10px;
+        }
+
+        .code-container {
+            font-size: 17px;
+            color: #ce9178; /* رنگ متن رشته‌ها در پایتون */
+        }
+
+        /* کامنت‌های رمانتیک با رنگ خاکستری ملایم کامپایلر */
+        .comment {
+            color: #6a9955;
+            font-style: italic;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 15px;
+        }
+
+        .typewriter {
+            overflow: hidden;
+            border-right: 2px solid var(--python-green);
+            white-space: nowrap;
+            width: 25ch;
+            animation: typing 2.5s steps(25, end) forwards, blink 0.75s step-end infinite;
+            color: #d4d4d4;
+        }
+
+        .keyword {
+            color: #c586c0;
+        }
+
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 25ch; }
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent; }
+            50% { border-color: var(--python-green); }
+        }
+
+        .result-panel {
+            margin-top: 35px;
+            width: 560px;
+            padding: 18px;
+            background: rgba(79, 253, 132, 0.03);
+            border-left: 3px solid var(--python-green);
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-in-out forwards;
+            animation-delay: 2.8s;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="python-window">
+        <div class="python-header">
+            <span>Python 3.11.0 (Darya Core)</span>
+            <span style="color: #6a9955;">● Running...</span>
+        </div>
+        
+        <div class="code-container">
+            <!-- کامنت رمانتیک اول: تو زیباترین خط کد زندگی منی -->
+            <span class="comment"># Note: تو زیباترین و معنادارترین خط کدی هستید که تا حالا نوشتم.</span>
+            
+            <!-- کامنت رمانتیک دوم: الگوریتمی که هیچ‌وقت باگ نمی‌خوره -->
+            <span class="comment"># Algorithm: فرمول دوست داشتن تو هرگز به نقطه پایان نمی‌رسه.</span>
+            
+            <br>
+            <span class="keyword">print</span>(<span class="typewriter">"I LOVE DARYA ❤️"</span>)
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <span style="font-size: 22px; color: var(--python-green);">OUTPUT: I LOVE DARYA ❤️</span>
+    </div>
+
+</body>
+</html>
