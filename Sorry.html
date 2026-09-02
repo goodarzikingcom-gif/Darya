@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Sorry, Darya 🤍</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(255, 120, 150, .12), transparent 30%),
+                radial-gradient(circle at 80% 80%, rgba(160, 100, 255, .10), transparent 30%),
+                #09090f;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            opacity: .4;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%,100% { opacity: .15; }
+            50% { opacity: .8; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            width: min(900px, 92%);
+            margin: auto;
+            padding: 70px 0;
+        }
+
+        .hero {
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .tiny {
+            color: #999;
+            letter-spacing: 5px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(65px, 13vw, 120px);
+            font-weight: 200;
+            letter-spacing: 10px;
+
+            background: linear-gradient(
+                90deg,
+                #ffffff,
+                #ffabc1,
+                #ffffff
+            );
+
+            background-size: 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+
+            animation: shine 5s linear infinite;
+        }
+
+        @keyframes shine {
+            from { background-position: 0%; }
+            to { background-position: 200%; }
+        }
+
+        .hero h2 {
+            margin-top: 12px;
+            font-size: 25px;
+            font-weight: 400;
+        }
+
+        .hero p {
+            max-width: 600px;
+            margin-top: 22px;
+            color: #bcbcc7;
+            line-height: 2;
+            font-size: 16px;
+        }
+
+        .scroll {
+            margin-top: 55px;
+            color: #777;
+            font-size: 12px;
+            animation: float 2s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            50% { transform: translateY(8px); }
+        }
+
+        .card {
+            margin: 30px 0;
+            padding: 40px;
+            border-radius: 26px;
+
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.08);
+
+            backdrop-filter: blur(15px);
+
+            box-shadow:
+                0 25px 70px rgba(0,0,0,.25);
+        }
+
+        .card h3 {
+            font-size: 25px;
+            font-weight: 400;
+            margin-bottom: 24px;
+        }
+
+        .pink {
+            color: #ff9fb7;
+        }
+
+        .card p {
+            color: #c9c9d2;
+            line-height: 2.2;
+            font-size: 16px;
+        }
+
+        .mistakes {
+            display: grid;
+            gap: 14px;
+        }
+
+        .mistake {
+            padding: 18px 20px;
+            border-radius: 15px;
+
+            background: rgba(255,255,255,.035);
+
+            border-left: 3px solid #ff8fa9;
+
+            color: #cfcfd7;
+
+            transition: .3s;
+        }
+
+        .mistake:hover {
+            transform: translateX(5px);
+            background: rgba(255,255,255,.06);
+        }
+
+        .promise {
+            text-align: center;
+            padding: 55px 35px;
+        }
+        .promise-icon {
+            font-size: 45px;
+            margin-bottom: 20px;
+        }
+
+        .promise h3 {
+            font-size: 28px;
+            margin-bottom: 25px;
+        }
+
+        .promise p {
+            max-width: 650px;
+            margin: auto;
+        }
+
+        .button-area {
+            text-align: center;
+            margin: 65px 0;
+        }
+
+        button {
+            border: none;
+            padding: 17px 36px;
+
+            border-radius: 50px;
+
+            color: white;
+            font-size: 15px;
+
+            cursor: pointer;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ff718f,
+                    #b75cff
+                );
+
+            box-shadow:
+                0 10px 35px rgba(255,100,140,.25);
+
+            transition: .3s;
+        }
+
+        button:hover {
+            transform: translateY(-4px) scale(1.03);
+        }
+
+        #secret {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: all 1s ease;
+        }
+
+        #secret.show {
+            max-height: 600px;
+            opacity: 1;
+            margin-top: 40px;
+        }
+
+        .secret-box {
+            padding: 40px;
+            border-radius: 25px;
+
+            background: rgba(255,150,180,.055);
+
+            border: 1px solid rgba(255,150,180,.15);
+        }
+
+        .secret-box h3 {
+            color: #ffabc0;
+            font-size: 26px;
+            margin-bottom: 22px;
+        }
+
+        .secret-box p {
+            color: #d2d2da;
+            line-height: 2.3;
+        }
+
+        .heart {
+            text-align: center;
+            font-size: 45px;
+            margin-top: 70px;
+
+            animation: heartbeat 1.5s infinite;
+        }
+
+        @keyframes heartbeat {
+            50% { transform: scale(1.12); }
+        }
+
+        footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 25px;
+        }
+
+        @media(max-width:600px) {
+
+            .container {
+                padding: 40px 0;
+            }
+
+            .card {
+                padding: 28px 22px;
+            }
+
+            .hero h2 {
+                font-size: 21px;
+            }
+
+            .hero p,
+            .card p {
+                font-size: 14px;
+            }
+
+            .promise {
+                padding: 40px 18px;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="tiny">
+            A LITTLE NOTE FOR YOU
+        </div>
+
+        <h1>Sorry</h1>
+
+        <h2>For my Darya 🤍</h2>
+
+        <p>
+            Sometimes I get things wrong,
+sometimes I say things I don't mean,
+and sometimes a little moment
+gets heavier than it should.
+
+But none of that changes
+how much you mean to me.
+
+So, Darya,
+for this little moment,
+for anything I said or did wrong,
+I'm truly sorry.
+
+I just want us to be okay,
+to smile again,
+and leave this little moment behind us. 🤍
+        </p>
+
+        <div class="scroll">
+            ↓ keep reading
+        </div>
+
+    </section>
+
+
+    <!-- LETTER -->
+
+    <section class="card">
+
+        <h3>
+            Dear Darya, <span class="pink">I'm sorry.</span>
+        </h3>
+
+        <p>
+
+            I know there have been moments when
+            I could have done better.
+
+            <br><br>
+
+            Maybe I said something the wrong way,
+            maybe I acted without thinking,
+            or maybe I didn't understand your feelings
+            as well as I should have.
+
+            <br><br>
+
+            And for those moments,
+            I genuinely want to say
+            <span class="pink">I'm sorry.</span>
+
+            <br><br>
+
+            Not because I want to make this moment
+            something sad or serious,
+            but because your feelings matter to me.
+
+            <br><br>
+
+            You matter to me.
+
+        </p>
+
+    </section>
+
+
+    <!-- LITTLE THINGS -->
+
+    <section class="card">
+
+        <h3>
+            The little things I want to do <span class="pink">better.</span>
+        </h3>
+        
+
+    
+</script>
+
+</body>
+</html>
+<div class="mistakes">
+
+            <div class="mistake">
+                Listen to you a little more carefully.
+            </div>
+
+            <div class="mistake">
+                Think before I speak when something matters.
+            </div>
+
+            <div class="mistake">
+                Understand your feelings instead of assuming them.
+            </div>
+
+            <div class="mistake">
+                Be more thoughtful with the person I care about.
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- PROMISE -->
+
+    <section class="card promise">
+
+        <div class="promise-icon">
+            🤍
+        </div>
+
+        <h3>
+            And here's my promise.
+        </h3>
+
+        <p>
+
+            I won't promise that I'll suddenly become perfect.
+
+            <br><br>
+
+            But I can promise that I'll keep learning.
+
+            <br><br>
+
+            When I make a mistake,
+            I'll listen.
+            I'll understand.
+            I'll learn.
+
+            <br><br>
+
+            And most importantly,
+            I'll try my best not to make
+            the same mistake twice.
+
+            <br><br>
+
+            Because loving someone isn't about
+            never making mistakes.
+
+            <br>
+
+            It's about caring enough
+            to become better for each other.
+
+            <br><br>
+
+            <span class="pink">
+                And I want to keep becoming better with you.
+            </span>
+
+        </p>
+
+    </section>
+
+
+    <!-- SECRET -->
+
+    <div class="button-area">
+
+        <button onclick="showSecret()">
+            There's something else...
+        </button>
+
+        <div id="secret">
+
+            <div class="secret-box">
+
+                <h3>
+                    One more thing, Darya...
+                </h3>
+
+                <p>
+
+                    I don't want this page to feel like
+                    a goodbye letter.
+
+                    <br><br>
+
+                    It's actually the opposite.
+
+                    <br><br>
+
+                    It's just a tiny reminder that
+                    even in the smallest moments,
+                    I care about us.
+
+                    <br><br>
+
+                    I love the laughs,
+                    the random conversations,
+                    the little moments,
+                    the stupid jokes,
+                    and all those ordinary days
+                    that somehow become special
+                    just because you're there.
+
+                    <br><br>
+
+                    So yes...
+
+                    <br>
+
+                    I messed up.
+
+                    <br>
+
+                    I'm sorry.
+
+                    <br><br>
+
+                    But I'm still here,
+                    still learning,
+                    still choosing you,
+                    and still grateful
+                    that I get to call you
+                    <span class="pink">my Darya.</span>
+
+                    <br><br>
+
+                    No dramatic promises.
+                    
+
+                    <br><br>
+
+                    Just me,
+                    trying to love you
+                    a little better every day.
+
+                    🤍
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="heart">
+        ♡
+    </div>
+
+    <footer>
+        Made with a little regret,
+        a lot of love,
+        and you in mind.
+        <br><br>
+        — For Darya
+    </footer>
+
+</div>
+
+
+<script>
+
+    // Stars
+
+    const stars = document.getElementById("stars");
+
+    for (let i = 0; i < 100; i++) {
+
+        const star = document.createElement("div");
+
+        star.className = "star";
+
+        star.style.left =
+            Math.random() * 100 + "%";
+
+        star.style.top =
+            Math.random() * 100 + "%";
+
+        star.style.animationDelay =
+            Math.random() * 3 + "s";
+
+        stars.appendChild(star);
+    }
+
+
+    // Secret message
+
+    function showSecret() {
+        const secret =
+            document.getElementById("secret");
+
+        const button =
+            document.querySelector("button");
+
+        secret.classList.toggle("show");
+
+        if (secret.classList.contains("show")) {
+
+            button.innerHTML =
+                "Okay... that's everything 🤍";
+
+            setTimeout(() => {
+
+                secret.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center"
+                });
+
+            }, 250);
+
+        } else {
+
+            button.innerHTML =
+                "There's something else...";
+
+        }
+
+    }
+
+</script>
+
+</body>
+</html>
