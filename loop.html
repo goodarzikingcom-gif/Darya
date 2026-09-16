@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Very Important Question 💖</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: radial-gradient(circle at 50% 30%, #542376 0%, #6633b8 60%, #05020a 100%);
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .font-serif-custom {
+      font-family: 'Playfair Display', serif;
+    }
+
+    /* شیشه مات */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(244, 114, 182, 0.2);
+    }
+
+    /* انیمیشن جهش دکمه No */
+    #no-btn {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* پالس نرم دکمه Yes */
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(185, 115, 223, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(241, 91, 116, 0.8); }
+    }
+    .pulse-glow {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-rose-50 flex items-center justify-center p-4 relative">
+
+  <!-- ذرات شناور در پس‌زمینه -->
+  <canvas id="bg-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+  <!-- کارت اصلی سوال -->
+  <main id="main-card" class="glass-card z-10 w-full max-w-lg p-8 md:p-12 rounded-3xl text-center shadow-[0_0_60px_rgba(244,63,94,0.15)] relative transition-all duration-500">
+    
+    <!-- گیف / آیکون بامزه -->
+    <div id="illustration" class="text-7xl mb-4 animate-bounce">
+      🥺👉👈
+    </div>
+
+    <span class="text-xs uppercase tracking-widest text-rose-300/70 font-semibold mb-2 block">
+      Only Honest Answers Allowed
+    </span>
+
+    <h1 id="question-text" class="text-3xl md:text-5xl font-extrabold font-serif-custom text-transparent bg-clip-text bg-gradient-to-r from-rose-200 via-pink-300 to-rose-100 mb-8 leading-tight">
+      Do you love me?
+    </h1>
+
+    <!-- کانتینر دکمه‌ها -->
+    <div class="relative min-h-[90px] flex items-center justify-center gap-6">
+      
+      <!-- دکمه YES -->
+      <button id="yes-btn" onclick="sayYes()" class="pulse-glow bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 hover:from-rose-400 hover:to-pink-500 text-white font-bold px-8 py-3.5 rounded-2xl shadow-xl hover:scale-105 transition-all duration-300 text-lg">
+        Yes! 🥰
+      </button>
+
+      <!-- دکمه NO (فرار کننده) -->
+      <button id="no-btn" class="bg-white/10 hover:bg-white/15 text-rose-200/80 font-semibold px-8 py-3.5 rounded-2xl border border-white/15 text-lg cursor-pointer">
+        No 😢
+      </button>
+
+    </div>
+
+    <p id="fun-hint" class="text-xs text-rose-300/40 mt-8 transition-opacity duration-300">
+      *Hint: There is only one right answer...
+    </p>
+  </main>
+
+  <!-- کارت پیام پیروزی (پس از زدن Yes) -->
+  <div id="success-card" class="hidden glass-card z-20 w-full max-w-lg p-8 md:p-12 rounded-3xl text-center shadow-[0_0_80px_rgba(244,63,94,0.3)] transform scale-90 opacity-0 transition-all duration-500">
+    <div class="text-7xl mb-5 animate-pulse">
+      💖✨🎉
+    </div>
+    
+    <h2 class="text-3xl md:text-4xl font-extrabold font-serif-custom text-white mb-4">
+      I Knew It!
+    </h2>
+    
+    <p class="text-rose-100/90 text-base md:text-lg leading-relaxed font-light mb-6">
+      You couldn't say no even if you tried! <br/>
+      I love you endlessly, to the depths of every ocean. 🌊🤍
+    </p>
+    <div class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-rose-500/20 border border-rose-400/30 text-rose-200 text-sm">
+      <span>Forever & Always Yours</span> 💍
+    </div>
+  </div>
+
+  <script>
+    const noBtn = document.getElementById('no-btn');
+    const yesBtn = document.getElementById('yes-btn');
+    const funHint = document.getElementById('fun-hint');
+    const mainCard = document.getElementById('main-card');
+    const successCard = document.getElementById('success-card');
+    const illustration = document.getElementById('illustration');
+
+    let dodgeCount = 0;
+    let yesScale = 1;
+
+    const funnyHints = [
+      "Nice try! But that button is broken 😜",
+      "You really thought you could click that? 😂",
+      "Oops, too slow! 🏃‍♂️💨",
+      "Look at the big shiny 'Yes' button instead! ✨",
+      "Resistance is futile, my love! 💖",
+      "Give up, it's destiny! 🥰"
+    ];
+
+    // تابع جابجایی دکمه NO
+    function dodgeNoButton() {
+      dodgeCount++;
+
+      // تبدیل دکمه به fixed برای فرار در کل محدوده صفحه
+      noBtn.style.position = 'fixed';
+
+      const padding = 60;
+      const maxX = window.innerWidth - noBtn.offsetWidth - padding;
+      const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+
+      const randomX = Math.max(padding, Math.floor(Math.random() * maxX));
+      const randomY = Math.max(padding, Math.floor(Math.random() * maxY));
+
+      noBtn.style.left = `${randomX}px`;
+      noBtn.style.top = `${randomY}px`;
+
+      // بزرگ‌تر کردن دکمه Yes با هر فرار
+      yesScale += 0.08;
+      yesBtn.style.transform = `scale(${yesScale})`;
+
+      // تغییر متن پیام بامزه پایین صفحه
+      const hintIndex = (dodgeCount - 1) % funnyHints.length;
+      funHint.textContent = funnyHints[hintIndex];
+      funHint.classList.remove('text-rose-300/40');
+      funHint.classList.add('text-rose-300', 'font-medium');
+
+      if (dodgeCount === 2) illustration.textContent = "😏";
+      if (dodgeCount === 4) illustration.textContent = "🙈";
+      if (dodgeCount >= 6) illustration.textContent = "🤭❤️";
+    }
+
+    // فرار هنگام نزدیک شدن یا بردن موس روی آن
+    noBtn.addEventListener('mouseenter', dodgeNoButton);
+    noBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      dodgeNoButton();
+    });
+
+    // رویداد کلیک دکمه YES
+    function sayYes() {
+      // شلیک آتش‌بازی و کانفتی
+      fullHeartExplosion();
+
+      // انیمیشن محو شدن کارت اصلی و آمدن پیام پیروزی
+      mainCard.classList.add('scale-90', 'opacity-0');
+      setTimeout(() => {
+        mainCard.classList.add('hidden');
+        successCard.classList.remove('hidden');
+        setTimeout(() => {
+          successCard.classList.remove('scale-90', 'opacity-0');
+          successCard.classList.add('scale-100', 'opacity-100');
+        }, 50);
+      }, 400);
+    }
+
+    function fullHeartExplosion() {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#f43f5e', '#ec4899', '#fb7185', '#ffffff', '#38bdf8']
+      });
+
+      setTimeout(() => {
+        confetti({
+          particleCount: 60,
+          angle: 60,
+          spread: 80,
+          origin: { x: 0, y: 0.7 },
+          colors: ['#f43f5e', '#fb7185', '#fbbf24']
+        });
+        confetti({
+          particleCount: 60,
+          angle: 120,
+          spread: 80,
+          origin: { x: 1, y: 0.7 },
+          colors: ['#f43f5e', '#fb7185', '#fbbf24']
+        });
+      }, 300);
+    }
+
+    // ذرات معلق قلبی در پس‌زمینه
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let hearts = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class FloatingHeart {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height + 20;
+        this.size = Math.random() * 14 + 10;
+        this.speedY = -(Math.random() * 0.8 + 0.4);
+        this.speedX = (Math.random() - 0.5) * 0.6;
+        this.opacity = Math.random() * 0.5 + 0.2;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        if (this.y < -30) this.reset();
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = "#f43f5e";
+        ctx.font = `${this.size}px serif`;
+        ctx.fillText("♥", this.x, this.y);
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < 25; i++) {
+      hearts.push(new FloatingHeart());
+    }
+
+    function animateBg() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      hearts.forEach(h => {
+        h.update();
+        h.draw();
+      });
+      requestAnimationFrame(animateBg);
+    }
+    animateBg();
+  </script>
+</body>
+</html>
