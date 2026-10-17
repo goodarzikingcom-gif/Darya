@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bored? Come on in.</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--deep:#4a2d63;--sea:#e0609a;--foam:#fff5f9;--sand:#ffe4f0;--sun:#ffd166;--ink:#10262e}
+*{box-sizing:border-box}
+body{margin:0;font-family:Fredoka,"Segoe UI",Arial,sans-serif;background:var(--foam);color:var(--ink);line-height:1.6;font-size:18px}
+header{background:linear-gradient(160deg,#4a2d63,#a24a8f 60%,#e0609a);color:#fff;text-align:center;padding:64px 20px 110px;position:relative}
+header h1{margin:0;font-size:clamp(2.2rem,6vw,4.2rem);font-weight:700;letter-spacing:-.5px}
+header p{margin:10px auto 0;max-width:32em;opacity:.85;font-size:1.1rem}
+/* wave edge under the header */
+header svg{position:absolute;bottom:-1px;left:0;width:100%;height:60px}
+main{max-width:1100px;margin:0 auto;padding:10px 24px 60px;display:grid;gap:32px;grid-template-columns:1fr}
+h2{font-size:1.5rem;margin:0 0 14px;color:var(--deep)}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:10px 24px;background:var(--sea);color:#fff;font-weight:500}
+button:hover{background:var(--deep)}
+button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.panel{background:#fff;border-radius:20px;padding:26px}
+.bottle{background:var(--sand);text-align:center;display:flex;flex-direction:column}
+#bottleText{flex:1;min-height:6em;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:6px 0 16px}
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:14px;flex-wrap:wrap}
+.tabs button{background:#fff;color:var(--deep);padding:6px 18px}
+.tabs button.on{background:var(--deep);color:#fff}
+.game-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+/* memory game grid: 4 columns on phones, 6 on laptops */
+#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{aspect-ratio:1;border-radius:14px;background:var(--sea);color:#fff;font-size:clamp(1.4rem,5vw,2.2rem);display:flex;align-items:center;justify-content:center;padding:0}
+.card.open,.card.done{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 2px var(--sea)}
+.card.done{opacity:.5}
+#win{text-align:center;font-weight:700;color:var(--sea);min-height:1.8em;margin:12px 0 0}
+.note{border-left:8px solid var(--sun)}
+.note p{margin:0 0 12px}
+#quote{font-size:1.4rem;color:var(--deep);min-height:3.2em}
+footer{text-align:center;padding:20px 20px 40px;color:#8a6a9c}
+@media (min-width:900px){
+  main{grid-template-columns:1fr 1fr;align-items:stretch}
+  .note{grid-column:1 / -1}
+  #grid{grid-template-columns:repeat(6,1fr)}
+  body{font-size:20px}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:background .2s}}
+
+/* ---- new sections ---- */
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:12px 0}
+input[type=text]{flex:1;min-width:200px;font:inherit;padding:10px 16px;border-radius:999px;border:2px solid #f3c2da;background:#fff}
+input[type=range]{accent-color:var(--sea)}
+.hint{margin:16px 0 0;color:#8a6a9c}
+#embed iframe{width:100%;border:0;border-radius:14px;margin-top:8px;height:352px}
+.nails{display:flex;gap:10px;justify-content:center;align-items:flex-end;margin:10px 0 18px}
+.nail{width:clamp(44px,12vw,62px);border-radius:45% 45% 16px 16px / 60% 60% 16px 16px;background-color:var(--c,#e0609a);position:relative;border:3px solid #fff;box-shadow:0 4px 10px rgba(74,45,99,.2);padding:0;overflow:hidden}
+.nail:hover{background-color:var(--c,#e0609a)}
+.nail.sel{outline:3px solid var(--sun);outline-offset:3px}
+.nail.gloss::after{content:"";position:absolute;left:18%;top:10%;width:18%;height:45%;border-radius:50%;background:rgba(255,255,255,.6)}
+.nail.glitter{background-image:radial-gradient(circle,#fff 1.5px,transparent 2px),radial-gradient(circle,#ffe9a8 1px,transparent 1.5px);background-size:12px 12px,7px 7px}
+.nail.french::before{content:"";position:absolute;left:0;right:0;top:0;height:32%;background:#fff}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:6px}
+.sw{width:40px;height:40px;padding:0;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #e8c6d8;font-size:1.2rem;display:flex;align-items:center;justify-content:center}
+#brace{width:100%;max-width:320px;display:block;margin:0 auto 12px}
+.opt{display:block;width:100%;text-align:left;margin:8px 0;background:#fff;color:var(--deep);border:2px solid #f3c2da;border-radius:16px}
+.opt:hover{background:var(--sand);color:var(--deep)}
+.result{text-align:center}.result b{display:block;font-size:1.7rem;color:var(--deep)}
+.orb{width:130px;height:130px;margin:6px auto 12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ffd0e6 40%,#c9a7ff);display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 8px 24px rgba(200,100,160,.35)}
+#answer{text-align:center;min-height:3.2em;font-size:1.2rem;color:var(--deep)}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@media (prefers-reduced-motion:no-preference){.shake{animation:shake .5s}}
+@media (min-width:900px){.wide{grid-column:1 / -1}}
+.now{font-size:1.2rem;color:var(--deep);margin-bottom:8px}
+#seek{width:100%;accent-color:var(--sea)}
+.opt.playing{background:var(--sand);border-color:var(--sea)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Bored, Darya? Good.</h1>
+  <p>You found the secret room. Play music, paint your nails, build a bracelet, or just float for a bit.</p>
+  <svg viewBox="0 0 1200 60" preserveAspectRatio="none" aria-hidden="true"><path d="M0 30 Q150 0 300 30 T600 30 T900 30 T1200 30 V60 H0Z" fill="#fff5f9"/></svg>
+</header>
+
+<main>
+  <!-- 1. Message in a bottle -->
+  <section class="panel bottle">
+    <h2>Message in a bottle</h2>
+    <div class="tabs" role="group" aria-label="Bottle type">
+      <button class="on" data-k="act">Something to do</button>
+      <button data-k="joke">A joke</button>
+      <button data-k="chal">A challenge</button>
+    </div>
+    <div id="bottleText" aria-live="polite">Pick a type, then pop the cork.</div>
+    <div><button id="open">Open a bottle</button></div>
+  </section>
+
+  <!-- 2. Memory game -->
+  <section class="panel">
+    <h2>Memory game</h2>
+    <div class="game-bar"><span>Moves: <b id="moves">0</b></span><button id="restart">New game</button></div>
+    <div id="grid"></div>
+    <p id="win"></p>
+  </section>
+
+    <!-- Music -->
+  <section class="panel wide">
+    <h2>Music corner 🎧</h2>
+    <div class="tabs" id="moods" role="group" aria-label="Music mood">
+      <button class="on" data-m="calm">🌊 Calm waves</button>
+      <button data-m="dream">✨ Dreamy chimes</button>
+      <button data-m="happy">🎀 Happy pluck</button>
+    </div>
+    <div class="row"><button id="playBtn">▶ Play</button><label>Volume <input type="range" id="vol" min="0" max="100" value="40"></label></div>
+    <p class="hint">Want your own songs? Paste a Spotify or YouTube link (song or playlist):</p>
+    <div class="row"><input type="text" id="linkIn" placeholder="https://open.spotify.com/playlist/..."><button id="linkGo">Load</button></div>
+    <div id="embed"></div>
+  </section>
+
+  <!-- My playlist: songs come from the SONGS list in the script -->
+  <section class="panel wide">
+    <h2>My playlist 🎵</h2>
+    <div class="now" id="now">Pick a song to start</div>
+    <input type="range" id="seek" min="0" max="100" value="0" aria-label="Seek">
+    <div class="row">
+      <button id="prevS" aria-label="Previous">⏮</button><button id="pS" aria-label="Play or pause">▶</button>
+      <button id="nextS" aria-label="Next">⏭</button><button id="shufS">Shuffle: off</button>
+    </div>
+    <div id="plist"></div>
+    <audio id="aud" preload="bored.mp3"></audio>
+  </section>
+
+  <!-- Nail studio -->
+  <section class="panel">
+    <h2>Nail studio 💅</h2>
+    <div class="nails" id="nails"></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="row">
+      <button data-f="gloss">Glossy</button><button data-f="glitter">Glitter</button>
+      <button data-f="french">French tip</button><button data-f="plain">Plain</button><button id="paintAll">Paint all</button>
+    </div>
+  </section>
+
+  <!-- Bracelet maker -->
+  <section class="panel">
+    <h2>Bracelet maker 📿</h2>
+    <svg id="brace" viewBox="0 0 300 300" role="img" aria-label="Your bracelet"></svg>
+    <div class="swatches" id="beads"></div>
+    <div class="row"><button id="undo">Undo</button><button id="clearB">Clear</button><button id="randB">Surprise me</button></div>
+  </section>
+
+  <!-- Aesthetic quiz -->
+  <section class="panel">
+    <h2>Which aesthetic are you? 🎀</h2>
+    <div id="quiz"></div>
+  </section>
+
+  <!-- Seashell oracle -->
+  <section class="panel">
+    <h2>Magic seashell 🐚</h2>
+    <div class="orb" id="orb">🐚</div>
+    <div class="row"><input type="text" id="ask" placeholder="Think of a question..."><button id="askBtn">Ask the shell</button></div>
+    <div id="answer" aria-live="polite"></div>
+  </section>
+
+  <!-- 3. Personal corner -->
+  <section class="panel note">
+    <h2>A note for you</h2>
+    <p>Write your own personal message here. Boredom is just your brain asking for something new, so go give it something fun.</p>
+    <div id="quote" aria-live="polite"></div>
+    <button id="nextQuote">Another one</button>
+  </section>
+</main>
+<footer>Come back anytime. The sea is not going anywhere.</footer>
+
+<script>
+// ---------- Content (add or edit freely) ----------
+const DATA = {
+  act: [
+    "Put on your favorite playlist and dance for ten minutes.",
+    "Text someone you haven't talked to in a while.",
+    "Make a cup of tea and stare out the window for five minutes.",
+    "Take a photo of the most beautiful thing near you.",
+    "Write down three things you're grateful for.",
+    "Watch a short animated film.",
+    "Go for a 15-minute walk with no destination.",
+    "Rearrange one corner of your room.",
+    "Make a playlist called 'Sea Days'.",
+    "Learn five words in a new language.",
+    "Bake something simple and share it.",
+    "Call someone you love, just to say hi.",
+    "Read ten pages of any book.",
+    "Doodle for ten minutes without a plan.",
+    "Watch a documentary about the ocean.",
+    "Try a brand new recipe.",
+    "Make a vision board for next year.",
+    "Water your plants, or adopt a tiny new one.",
+    "Write a letter to your future self.",
+    "Do a crossword or a jigsaw puzzle.",
+    "Listen to a podcast episode on a random topic.",
+    "Take a long shower and sing like nobody is listening.",
+    "Organize the photos on your phone.",
+    "Write a bucket list of ten things.",
+    "Stretch or do yoga for ten minutes.",
+    "Visit a place nearby you've never been to.",
+    "Cook breakfast for dinner.",
+    "Look at the clouds for five minutes and find shapes.",
+    "Learn the first lines of a song on an instrument.",
+    "Make a list of movies you want to watch and pick one."
+  ],
+  joke: [
+    "I'm on a seafood diet. I see food and I eat it.",
+    "Why don't skeletons fight each other? They don't have the guts.",
+    "My wifi went down for five minutes, so I talked to my family. They seem nice.",
+    "I told my plants I loved them. They didn't grow, but they did stop judging me.",
+    "Why did the scarecrow get promoted? He was outstanding in his field.",
+    "I'm reading a book about anti-gravity. It's impossible to put down.",
+    "I tried to catch fog yesterday. Mist.",
+    "Why did the coffee file a police report? It got mugged.",
+    "I'd tell you a chemistry joke, but I know I wouldn't get a reaction.",
+    "My bed is a magical place where I suddenly remember everything I forgot to do.",
+    "I'm not lazy. I'm just on energy-saving mode.",
+    "I started a hot air balloon business, but it never took off.",
+    "What do you call a fake noodle? An impasta.",
+    "Why did the math book look sad? It had too many problems.",
+    "I made a pencil with two erasers. It was pointless.",
+    "What do you call a dog that does magic? A Labracadabrador.",
+    "My fridge is a slot machine: I keep opening it hoping something new shows up.",
+    "Why can't you trust stairs? They're always up to something.",
+    "I asked Siri if I'm weird. She said, 'Hold on, let me check the search results.'",
+    "Sleep and I are in a long-distance relationship. We only meet way too late at night.",
+    "My phone battery lasts 100% of the time I don't need it and 3% when I do.",
+    "Why did the tomato blush? It saw the salad dressing.",
+    "I told my cat a joke. He just stared at me. Same energy as my group chat.",
+    "Parallel lines have so much in common. It's a shame they'll never meet.",
+    "The early bird gets the worm, but the second mouse gets the cheese.",
+    "I used to hate facial hair, but then it grew on me.",
+    "Why do fish never need a calculator? They're good with scales.",
+    "I'm great at multitasking: I can waste time, be unproductive, and procrastinate all at once.",
+    "What's a pirate's favorite letter? You'd think R, but his first love is the C.",
+    "I finally got my ex's new number. Turns out it was 'the one that got away' and it's just a wrong number.",
+    "Why did the cookie go to the doctor? It felt crumby.",
+    "Why was the computer cold? It left its Windows open."
+  ],
+  chal: [
+    "Find 10 blue things in 60 seconds.",
+    "Write a two-line poem about your day.",
+    "Breathe deeply for two minutes without touching your phone.",
+    "Learn to say 'thank you' in three new languages.",
+    "Draw your room from memory in two minutes.",
+    "Balance a spoon on your nose for 10 seconds.",
+    "Do 20 jumping jacks right now.",
+    "Say the alphabet backwards without pausing.",
+    "Name 15 animals in 30 seconds.",
+    "Build a paper airplane and see how far it flies.",
+    "Write a note to your future self and hide it for a year.",
+    "Eat a snack using only your non-dominant hand.",
+    "Build the tallest tower you can from stuff around you.",
+    "Tell a whole story in exactly six words.",
+    "Hold a plank for 45 seconds.",
+    "Draw a friend's portrait without lifting your pen.",
+    "Find five objects starting with the letter S in one minute.",
+    "Walk across the room with a book on your head.",
+    "Cook something with only three ingredients.",
+    "Memorize a 7-digit number in 20 seconds.",
+    "Write down five goals for this month.",
+    "Invent a secret handshake and teach it to someone.",
+    "Stay off your phone for 30 minutes.",
+    "Photograph something that looks like a face but isn't.",
+    "Give three genuine compliments today.",
+    "Do a five-minute stretch routine.",
+    "Write a haiku about the sea.",
+    "Invent a new word and write its definition.",
+    "Hum a song and make someone guess it.",
+    "Clean one drawer or shelf in ten minutes.",
+    "Learn a simple magic trick.",
+    "Sing the chorus of your favorite song in a funny voice.",
+    "Draw a perfect circle freehand. Then try again."
+  ],
+  quote: [
+    "Every wave eventually reaches the shore.",
+    "Small things you do today make a big tomorrow.",
+    "You don't have to be fast. You just have to keep floating forward.",
+    "Boredom is the space where good ideas learn to swim.",
+    "Be gentle with yourself. You're still learning the tide.",
+    "The sea doesn't rush, and it still gets everywhere it needs to be.",
+    "Some days you ride the wave. Some days you just stay afloat. Both count.",
+    "A calm mind is the best view in the world.",
+    "You are allowed to take a break and call it progress.",
+    "Even the biggest ocean started as a tiny drop.",
+    "Curiosity is a boat that always finds new islands.",
+    "Rest is not the opposite of growth. It's part of it.",
+    "What you're looking for might be one small step from here.",
+    "Be someone's sunshine today, even if it's cloudy for you.",
+    "You are more capable than your worst day tells you.",
+    "Make today a little more fun than yesterday.",
+    "Good things come to those who wander a little.",
+    "Let the day be messy. You can still make something beautiful out of it.",
+    "Your story is still being written. Pick a good pen.",
+    "Today is a fresh page. Doodle on it."
+  ]
+};
+
+// Pick a random item, avoiding an immediate repeat
+const last = {};
+function pick(key){
+  const list = DATA[key];
+  let i;
+  do { i = Math.floor(Math.random() * list.length); } while (list.length > 1 && i === last[key]);
+  last[key] = i;
+  return list[i];
+}
+
+// ---------- Bottle ----------
+let kind = "act";
+document.querySelectorAll(".bottle .tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".bottle .tabs button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); kind = b.dataset.k;
+});
+document.getElementById("open").onclick = () => {
+  document.getElementById("bottleText").textContent = pick(kind);
+};
+
+// ---------- Quotes ----------
+const quoteEl = document.getElementById("quote");
+const showQuote = () => { quoteEl.textContent = pick("quote"); };
+document.getElementById("nextQuote").onclick = showQuote;
+showQuote();
+
+// ---------- Memory game (12 pairs) ----------
+const EMOJI = ["🐚","🐠","🌊","⭐","🐬","🦀","⛵","🌴","🐙","🦭","🏝️","🐳"];
+const grid = document.getElementById("grid");
+let first = null, lock = false, moves = 0, matched = 0;
+
+function shuffle(a){
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function start(){
+  grid.innerHTML = ""; first = null; lock = false; moves = 0; matched = 0;
+  document.getElementById("moves").textContent = 0;
+  document.getElementById("win").textContent = "";
+  shuffle([...EMOJI, ...EMOJI]).forEach(e => {
+    const c = document.createElement("button");
+    c.className = "card"; c.dataset.e = e; c.setAttribute("aria-label", "Card");
+    c.onclick = () => flip(c);
+    grid.appendChild(c);
+  });
+}
+
+function flip(c){
+  if (lock || c.classList.contains("open") || c.classList.contains("done")) return;
+  c.classList.add("open"); c.textContent = c.dataset.e;
+  if (!first){ first = c; return; }
+  moves++; document.getElementById("moves").textContent = moves;
+  if (first.dataset.e === c.dataset.e){
+    first.classList.replace("open", "done"); c.classList.replace("open", "done");
+    first = null; matched++;
+    if (matched === EMOJI.length) document.getElementById("win").textContent = "You did it in " + moves + " moves! 🎉";
+  } else {
+    lock = true;
+    setTimeout(() => {
+      [first, c].forEach(x => { x.classList.remove("open"); x.textContent = ""; });
+      first = null; lock = false;
+    }, 800);
+  }
+}
+document.getElementById("restart").onclick = start;
+start();
+
+// ---------- Music (generated with Web Audio, no files needed) ----------
+const MOODS = {
+  calm:  {scale:[220,247,277,330,370,440,494], step:1800, type:"sine",     noise:true},
+  dream: {scale:[261.6,293.7,329.6,392,440,523.3,587.3,659.3], step:900, type:"triangle", noise:false},
+  happy: {scale:[261.6,329.6,392,440,523.3,659.3,784], step:420, type:"triangle", noise:false}
+};
+let ctx, master, timer, noiseSrc, noiseGain, lfo, mood = "calm", playing = false, idx = 2;
+const playBtn = document.getElementById("playBtn"), volEl = document.getElementById("vol");
+
+function note(f, dur){
+  const t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = MOODS[mood].type; o.frequency.value = f;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.3, t + 0.03);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + dur + 0.05);
+}
+function tick(){
+  const m = MOODS[mood];
+  idx = Math.max(0, Math.min(m.scale.length - 1, idx + [-2,-1,-1,0,1,1,2][Math.floor(Math.random()*7)]));
+  note(m.scale[idx], m.step / 1000 * 2.4);
+  if (Math.random() < 0.3) note(m.scale[idx] * 2, m.step / 1000 * 1.6);
+}
+function startNoise(){
+  // soft looping "waves": filtered white noise with a slow volume swell
+  const len = ctx.sampleRate * 2, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  noiseSrc = ctx.createBufferSource(); noiseSrc.buffer = buf; noiseSrc.loop = true;
+  const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 500;
+  noiseGain = ctx.createGain(); noiseGain.gain.value = 0.12;
+  lfo = ctx.createOscillator(); lfo.frequency.value = 0.12;
+  const depth = ctx.createGain(); depth.gain.value = 0.08;
+  lfo.connect(depth); depth.connect(noiseGain.gain);
+  noiseSrc.connect(lp); lp.connect(noiseGain); noiseGain.connect(master);
+  noiseSrc.start(); lfo.start();
+}
+function stopMusic(){
+  clearInterval(timer); playing = false; playBtn.textContent = "▶ Play";
+  if (noiseSrc){ noiseSrc.stop(); lfo.stop(); noiseSrc = null; }
+}
+function startMusic(){
+  if (!ctx){
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.connect(ctx.destination);
+  }
+  master.gain.value = volEl.value / 100;
+  ctx.resume();
+  if (MOODS[mood].noise) startNoise();
+  tick(); timer = setInterval(tick, MOODS[mood].step);
+  playing = true; playBtn.textContent = "⏸ Pause";
+}
+playBtn.onclick = () => playing ? stopMusic() : startMusic();
+volEl.oninput = () => { if (master) master.gain.value = volEl.value / 100; };
+document.querySelectorAll("#moods button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#moods button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); mood = b.dataset.m;
+  if (playing){ stopMusic(); startMusic(); }
+});
+
+// Turn a pasted Spotify / YouTube link into an embedded player
+function toEmbed(u){
+  try {
+    const url = new URL(u);
+    if (url.hostname.includes("spotify.com")) return "https://open.spotify.com/embed" + url.pathname.replace(/^\/intl-[a-z-]+/, "");
+    if (url.hostname.includes("youtube.com") || url.hostname === "youtu.be"){
+      const list = url.searchParams.get("list");
+      const v = url.hostname === "youtu.be" ? url.pathname.slice(1) : url.searchParams.get("v");
+      if (v) return "https://www.youtube.com/embed/" + v + (list ? "?list=" + list : "");
+      if (list) return "https://www.youtube.com/embed/videoseries?list=" + list;
+    }
+  } catch (e) {}
+  return null;
+}
+function loadLink(u){
+  const src = toEmbed(u), box = document.getElementById("embed");
+  if (!src){ box.textContent = "That link didn't work. Try a Spotify or YouTube link."; return; }
+  stopMusic();
+  box.innerHTML = '<iframe allow="autoplay; encrypted-media" loading="lazy" title="Music player"></iframe>';
+  box.firstChild.src = src;
+  try { localStorage.setItem("daryaMusic", u); } catch (e) {}
+}
+document.getElementById("linkGo").onclick = () => loadLink(document.getElementById("linkIn").value.trim());
+try { const saved = localStorage.getItem("daryaMusic"); if (saved){ document.getElementById("linkIn").value = saved; loadLink(saved); } } catch (e) {}
+
+// ---------- Nail studio ----------
+const NAIL_COLORS = ["#ff8fb8","#e0609a","#c9a7ff","#8fd8ff","#7fe0c3","#ffe08a","#ff6b6b","#ffffff","#4a2d63","#f4c6a8"];
+const nailsEl = document.getElementById("nails"), nails = [];
+let selNail = 2;
+[88, 104, 114, 104, 84].forEach((h, i) => {
+  const n = document.createElement("button");
+  n.className = "nail" + (i === selNail ? " sel" : ""); n.style.height = h + "px"; n.setAttribute("aria-label", "Nail " + (i + 1));
+  n.onclick = () => { selNail = i; nails.forEach((x, j) => x.classList.toggle("sel", j === i)); };
+  nailsEl.appendChild(n); nails.push(n);
+});
+NAIL_COLORS.forEach(c => {
+  const b = document.createElement("button");
+  b.className = "sw"; b.style.background = c; b.setAttribute("aria-label", "Color " + c);
+  b.onclick = () => nails[selNail].style.setProperty("--c", c);
+  document.getElementById("swatches").appendChild(b);
+});
+document.querySelectorAll("[data-f]").forEach(b => b.onclick = () => {
+  const n = nails[selNail];
+  n.classList.remove("gloss", "glitter", "french");
+  if (b.dataset.f !== "plain") n.classList.add(b.dataset.f);
+});
+document.getElementById("paintAll").onclick = () => {
+  const src = nails[selNail], c = src.style.getPropertyValue("--c");
+  nails.forEach(n => {
+    if (c) n.style.setProperty("--c", c);
+    n.classList.remove("gloss", "glitter", "french");
+    ["gloss", "glitter", "french"].forEach(k => { if (src.classList.contains(k)) n.classList.add(k); });
+  });
+};
+
+// ---------- Bracelet maker ----------
+const BEADS = ["#ff8fb8","#ffc2dc","#c9a7ff","#8fd8ff","#7fe0c3","#ffe08a","#ffffff","💖","⭐","🐚","🌸","🦋"];
+const SLOTS = 18, brace = document.getElementById("brace");
+let bracelet = [];
+function drawBracelet(){
+  let s = '<circle cx="150" cy="150" r="110" fill="none" stroke="#e8c6d8" stroke-width="3"/>';
+  for (let i = 0; i < SLOTS; i++){
+    const a = i / SLOTS * Math.PI * 2 - Math.PI / 2, x = 150 + 110 * Math.cos(a), y = 150 + 110 * Math.sin(a), b = bracelet[i];
+    if (!b) s += '<circle cx="'+x+'" cy="'+y+'" r="13" fill="none" stroke="#e8c6d8" stroke-dasharray="3 3"/>';
+    else if (b[0] === "#") s += '<circle cx="'+x+'" cy="'+y+'" r="13" fill="'+b+'" stroke="#e8c6d8" stroke-width="1.5"/><circle cx="'+(x-4)+'" cy="'+(y-4)+'" r="3" fill="#fff" opacity=".7"/>';
+    else s += '<circle cx="'+x+'" cy="'+y+'" r="14" fill="#fff" stroke="#e8c6d8"/><text x="'+x+'" y="'+(y+6)+'" text-anchor="middle" font-size="16">'+b+'</text>';
+  }
+  s += '<text x="150" y="158" text-anchor="middle" font-size="20" fill="#4a2d63">' + bracelet.length + "/" + SLOTS + "</text>";
+  brace.innerHTML = s;
+}
+BEADS.forEach(b => {
+  const el = document.createElement("button");
+  el.className = "sw"; el.setAttribute("aria-label", "Add bead");
+  if (b[0] === "#") el.style.background = b; else { el.style.background = "#fff"; el.textContent = b; }
+  el.onclick = () => { if (bracelet.length < SLOTS){ bracelet.push(b); drawBracelet(); } };
+  document.getElementById("beads").appendChild(el);
+});
+document.getElementById("undo").onclick = () => { bracelet.pop(); drawBracelet(); };
+document.getElementById("clearB").onclick = () => { bracelet = []; drawBracelet(); };
+document.getElementById("randB").onclick = () => {
+  bracelet = Array.from({length: SLOTS}, () => BEADS[Math.floor(Math.random() * BEADS.length)]); drawBracelet();
+};
+drawBracelet();
+
+// ---------- Aesthetic quiz ----------
+const QUIZ = [
+  {q:"Your perfect Saturday?", a:[["Sunrise beach walk and shell hunting","mermaid"],["Tea party with lace and bows","coquette"],["Baking and picking wildflowers","cottage"],["Mall trip with glitter on everything","y2k"]]},
+  {q:"Pick a color vibe:", a:[["Sea glass and pearl","mermaid"],["Baby pink and cream","coquette"],["Sage green and butter yellow","cottage"],["Hot pink and silver","y2k"]]},
+  {q:"Dream accessory?", a:[["Shell necklace","mermaid"],["Satin hair bow","coquette"],["Woven basket bag","cottage"],["Butterfly clips","y2k"]]},
+  {q:"Choose a drink:", a:[["Blue lemonade","mermaid"],["Strawberry milk","coquette"],["Fresh mint tea","cottage"],["Bubble tea","y2k"]]},
+  {q:"Your soundtrack?", a:[["Dreamy and wavy","mermaid"],["Soft love songs","coquette"],["Cozy acoustic","cottage"],["Bubbly pop","y2k"]]}
+];
+const RESULTS = {
+  mermaid:["🧜‍♀️ Mermaidcore","Dreamy, calm and a little mysterious. Pearls, waves and sparkle are your love language."],
+  coquette:["🎀 Coquette","Soft, sweet and romantic. You turn everyday things into tiny bows and lace-trimmed moments."],
+  cottage:["🌷 Cottagecore","Warm, cozy and creative. You bring the calm of a sunny kitchen and a basket of flowers everywhere."],
+  y2k:["🦋 Y2K Pop","Bold, bubbly and fun. You walk in and the room gets glitter."]
+};
+const quizEl = document.getElementById("quiz");
+let qi = 0, score = {};
+function renderQuiz(){
+  if (qi >= QUIZ.length){
+    const top = Object.keys(score).sort((a, b) => score[b] - score[a])[0], r = RESULTS[top];
+    quizEl.innerHTML = '<div class="result"><b>' + r[0] + "</b><p>" + r[1] + '</p><button id="again">Take it again</button></div>';
+    document.getElementById("again").onclick = () => { qi = 0; score = {}; renderQuiz(); };
+    return;
+  }
+  const q = QUIZ[qi];
+  quizEl.innerHTML = "<p><b>" + (qi + 1) + "/" + QUIZ.length + "</b> " + q.q + "</p>";
+  q.a.forEach(([label, key]) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = label;
+    b.onclick = () => { score[key] = (score[key] || 0) + 1; qi++; renderQuiz(); };
+    quizEl.appendChild(b);
+  });
+}
+renderQuiz();
+
+// ---------- Magic seashell ----------
+const ORACLE = ["Yes, absolutely!","Not today, sweetie.","The tide says maybe.","Ask again after a snack.","100%, go for it.","The stars are giggling: yes.","Hmm, trust your gut.","Definitely not, but you'll be fine.","Signs point to yes.","Sleep on it and see.","The sea says go now!","Not yet, be patient.","You already know the answer.","A big yes with sparkles.","Better not tell you now."];
+document.getElementById("askBtn").onclick = () => {
+  const orb = document.getElementById("orb");
+  orb.classList.remove("shake"); void orb.offsetWidth; orb.classList.add("shake");
+  document.getElementById("answer").textContent = ORACLE[Math.floor(Math.random() * ORACLE.length)];
+};
+// ---------- My playlist (your own audio files) ----------
+// Put the mp3 right next to this page (same folder) and write its exact file name below.
+const SONGS = [
+  {title: "My song", file: "bored.mp3"},   // change the title and the file name
+  // {title: "Another song", file: "song2.mp3"},
+];
+const aud = document.getElementById("aud"), plist = document.getElementById("plist");
+const nowEl = document.getElementById("now"), seek = document.getElementById("seek"), pS = document.getElementById("pS");
+let cur = -1, shuffleOn = false;
+aud.volume = volEl.value / 100;
+volEl.addEventListener("input", () => { aud.volume = volEl.value / 100; });
+
+function renderList(){
+  plist.innerHTML = "";
+  if (!SONGS.length){
+    plist.innerHTML = '<p class="hint">No songs yet. Add your files to the SONGS list in the page code.</p>';
+    return;
+  }
+  SONGS.forEach((song, i) => {
+    const b = document.createElement("button");
+    b.className = "opt" + (i === cur ? " playing" : "");
+    b.textContent = (i === cur ? "▶ " : "") + song.title;
+    b.onclick = () => playSong(i);
+    plist.appendChild(b);
+  });
+}
+function playSong(i){
+  if (!SONGS.length) return;
+  cur = i; stopMusic();
+  aud.src = SONGS[i].file; aud.play().catch(() => {});
+  nowEl.textContent = SONGS[i].title; pS.textContent = "⏸"; renderList();
+}
+function nextSong(step){
+  if (!SONGS.length) return;
+  const n = shuffleOn ? Math.floor(Math.random() * SONGS.length) : (cur + step + SONGS.length) % SONGS.length;
+  playSong(n);
+}
+pS.onclick = () => {
+  if (!SONGS.length) return;
+  if (cur < 0) return playSong(0);
+  if (aud.paused){ stopMusic(); aud.play(); pS.textContent = "⏸"; } else { aud.pause(); pS.textContent = "▶"; }
+};
+document.getElementById("nextS").onclick = () => nextSong(1);
+document.getElementById("prevS").onclick = () => nextSong(-1);
+document.getElementById("shufS").onclick = e => { shuffleOn = !shuffleOn; e.target.textContent = "Shuffle: " + (shuffleOn ? "on" : "off"); };
+aud.onended = () => nextSong(1);
+aud.ontimeupdate = () => { if (aud.duration) seek.value = aud.currentTime / aud.duration * 100; };
+seek.oninput = () => { if (aud.duration) aud.currentTime = seek.value / 100 * aud.duration; };
+// Starting the generated music pauses the playlist
+const _startMusic = startMusic;
+startMusic = function(){ aud.pause(); pS.textContent = "▶"; _startMusic(); };
+// Show a clear message if the file name is wrong
+aud.onerror = () => { nowEl.textContent = "Can't find the song file. Check the file name in SONGS."; pS.textContent = "▶"; };
+// Browsers block autoplay, so the first tap on the page (outside the controls) starts the first song
+document.addEventListener("pointerdown", e => {
+  if (cur < 0 && !playing && SONGS.length && !e.target.closest("button,input,a,iframe")) playSong(0);
+}, {once: true});
+renderList();
+</script>
+</body>
+</html>
