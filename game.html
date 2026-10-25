@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catch Me If You Can</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blush: #ffe4ee;
+    --petal: #ffb3cf;
+    --rose: #e8578f;
+    --plum: #7a2a55;
+    --cream: #fff8fb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px;
+    background: radial-gradient(circle at 20% 10%, #fff 0, var(--blush) 45%, var(--petal) 100%);
+    font-family: 'Fredoka', system-ui, sans-serif; color: var(--plum);
+  }
+  h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(2rem, 4vw, 3rem); margin: 0; color: var(--rose); }
+  p.sub { margin: 0; font-size: 1.05rem; }
+  .hud { display: flex; gap: 16px; align-items: center; font-weight: 600; }
+  .pill { background: var(--cream); border: 3px solid var(--petal); border-radius: 999px; padding: 6px 18px; }
+  #stage {
+    width: min(92vw, 960px); aspect-ratio: 16 / 9;
+    border: 6px solid var(--cream); border-radius: 28px;
+    box-shadow: 0 10px 40px rgba(232, 87, 143, .35);
+    background: #d9f5d3; cursor: pointer; touch-action: none;
+  }
+  button {
+    font: inherit; font-weight: 600; color: #fff; background: var(--rose);
+    border: 0; border-radius: 999px; padding: 8px 22px; cursor: pointer;
+  }
+  button:focus-visible { outline: 3px solid var(--plum); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+  <h1>Catch Me If You Can</h1>
+  <p class="sub">Help Amin catch Darya in the flower garden. Move with arrow keys / WASD, or click where he should run.</p>
+  <div class="hud">
+    <span class="pill">Kisses: <span id="score">0</span></span>
+    <span class="pill">Best streak: <span id="best">0</span></span>
+    <button id="reset">Restart</button>
+  </div>
+  <canvas id="stage" width="960" height="540"></canvas>
+
+<script>
+(() => {
+  const cv = document.getElementById('stage');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+
+  // Pre-generate flower decorations once so they do not flicker
+  const flowers = Array.from({ length: 55 }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    e: ['🌸', '🌷', '🌼', '🌺', '💐', '🌹'][Math.floor(Math.random() * 6)],
+    s: 22 + Math.random() * 22
+  }));
+
+  const amin  = { x: 140, y: H / 2, r: 40, speed: 4.2, e: '🧑', target: null };
+  const darya = { x: W - 160, y: H / 2, r: 40, speed: 3.3, e: '👩', vx: 0, vy: 0, wander: 0 };
+  let score = 0, best = 0, hearts = [], kissTimer = 0, kissPos = { x: W / 2, y: H / 2 };
+  const keys = {};
+
+  // Real photos: put amin.jpg and darya.jpg next to this file (emoji is used if missing)
+  const loadImg = src => { const i = new Image(); i.ok = false; i.onload = () => { i.ok = true; }; i.src = src; return i; };
+  const photos = { amin: loadImg('amin3.jpg'), darya: loadImg('darya4.jpg') };
+
+  // Kiss sounds: put real recordings next to this file as kiss1.mp3, kiss2.mp3 ... kiss8.mp3
+  // (kiss.mp3 also works). A different one plays each time. Without files, a synthesized kiss is used.
+  const kissClips = ['kiss.mp3', ...Array.from({ length: 8 }, (_, i) => `kiss${i + 1}.mp3`)].map(src => {
+    const a = new Audio(src); const clip = { a, ok: false };
+    a.addEventListener('canplaythrough', () => { clip.ok = true; });
+    a.preload = 'auto'; a.load(); return clip;
+  });
+  let actx = null, lastClip = -1, lastStyle = -1;
+
+  function playKiss() {
+    // Prefer real recordings: random clip, never the same one twice in a row
+    const ready = kissClips.map((c, i) => i).filter(i => kissClips[i].ok);
+    if (ready.length) {
+      const pool = ready.length > 1 ? ready.filter(i => i !== lastClip) : ready;
+      lastClip = pool[Math.floor(Math.random() * pool.length)];
+      const a = kissClips[lastClip].a;
+      a.currentTime = 0;
+      a.playbackRate = 0.92 + Math.random() * 0.18;
+      a.volume = 0.8 + Math.random() * 0.2;
+      a.play().catch(() => {});
+      return;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    actx = actx || new AC();
+    if (actx.state === 'suspended') actx.resume();
+    const t0 = actx.currentTime + 0.01;
+    const rnd = (a, b) => a + Math.random() * (b - a);
+
+    // Three very different kiss styles: quick peck, normal smack, long slow kiss
+    const styles = [
+      { p: [1.25, 1.7], b: [0.025, 0.045], v: [0.5, 0.7] },
+      { p: [0.9, 1.2],  b: [0.07, 0.11],   v: [0.65, 0.85] },
+      { p: [0.55, 0.8], b: [0.15, 0.24],   v: [0.6, 0.8] }
+    ];
+    let si; do { si = Math.floor(Math.random() * styles.length); } while (si === lastStyle);
+    lastStyle = si;
+    const st = styles[si];
+    const pitch = rnd(...st.p), body = rnd(...st.b), volume = rnd(...st.v);
+
+    const noise = dur => {
+      const len = Math.floor(actx.sampleRate * dur);
+      const buf = actx.createBuffer(1, len, actx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = actx.createBufferSource(); src.buffer = buf; return src;
+    };
+
+    const smooch = (t, vol, p) => {
+      // Wet body: band-passed noise that rises as the lips tighten
+      const n = noise(body + 0.05), bp = actx.createBiquadFilter(), ng = actx.createGain();
+      bp.type = 'bandpass'; bp.Q.value = rnd(2, 6);
+      bp.frequency.setValueAtTime(450 * p, t);
+      bp.frequency.exponentialRampToValueAtTime(rnd(1100, 1900) * p, t + body);
+      ng.gain.setValueAtTime(0.0001, t);
+      ng.gain.exponentialRampToValueAtTime(vol * 0.9, t + body * 0.5);
+      ng.gain.exponentialRampToValueAtTime(0.0001, t + body + 0.04);
+      n.connect(bp).connect(ng).connect(actx.destination); n.start(t);
+
+      // Release pop: sharp pitch drop
+      const tp = t + body;
+      const o = actx.createOscillator(), og = actx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(rnd(900, 1400) * p, tp);
+      o.frequency.exponentialRampToValueAtTime(rnd(150, 260) * p, tp + 0.05);
+      og.gain.setValueAtTime(vol, tp);
+      og.gain.exponentialRampToValueAtTime(0.0001, tp + rnd(0.05, 0.09));
+      o.connect(og).connect(actx.destination); o.start(tp); o.stop(tp + 0.1);
+
+      // Tiny moist click on release
+      const c = noise(0.02), hp = actx.createBiquadFilter(), cg = actx.createGain();
+      hp.type = 'highpass'; hp.frequency.value = rnd(2200, 3800);
+      cg.gain.setValueAtTime(vol * 0.5, tp);
+      cg.gain.exponentialRampToValueAtTime(0.0001, tp + 0.02);
+      c.connect(hp).connect(cg).connect(actx.destination); c.start(tp);
+    };
+
+    smooch(t0, volume, pitch);
+    if (Math.random() < 0.3) smooch(t0 + body + rnd(0.16, 0.26), volume * 0.7, pitch * rnd(1.05, 1.25));
+  }
+
+  addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; amin.target = null; if (e.key.startsWith('Arrow')) e.preventDefault(); });
+  addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+  cv.addEventListener('pointerdown', e => {
+    const b = cv.getBoundingClientRect();
+    amin.target = { x: (e.clientX - b.left) * W / b.width, y: (e.clientY - b.top) * H / b.height };
+  });
+  document.getElementById('reset').onclick = () => {
+    score = 0; scoreEl.textContent = 0; darya.speed = 3.3; hearts = []; kissTimer = 0; respawn();
+  };
+
+  function respawn() {
+    // Place Darya far from Amin
+    do { darya.x = 60 + Math.random() * (W - 120); darya.y = 60 + Math.random() * (H - 120); }
+    while (Math.hypot(darya.x - amin.x, darya.y - amin.y) < 350);
+  }
+
+  function burst(x, y) {
+    for (let i = 0; i < 18; i++) {
+      const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3;
+      hearts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, life: 70, e: Math.random() < .5 ? '💗' : '💖' });
+    }
+  }
+
+  function update() {
+    if (kissTimer > 0) { kissTimer--; if (kissTimer === 0) respawn(); }
+    else {
+      // Amin movement: keyboard first, then click target
+      let dx = (keys['arrowright'] || keys['d'] ? 1 : 0) - (keys['arrowleft'] || keys['a'] ? 1 : 0);
+      let dy = (keys['arrowdown'] || keys['s'] ? 1 : 0) - (keys['arrowup'] || keys['w'] ? 1 : 0);
+      if (!dx && !dy && amin.target) {
+        const tx = amin.target.x - amin.x, ty = amin.target.y - amin.y, d = Math.hypot(tx, ty);
+        if (d > 6) { dx = tx / d; dy = ty / d; } else amin.target = null;
+      }
+      const m = Math.hypot(dx, dy) || 1;
+      amin.x += dx / m * amin.speed * (dx || dy ? 1 : 0);
+      amin.y += dy / m * amin.speed * (dx || dy ? 1 : 0);
+
+      // Darya AI: run away when Amin is close, otherwise wander
+      const ax = darya.x - amin.x, ay = darya.y - amin.y, ad = Math.hypot(ax, ay);
+      let vx, vy;
+      if (ad < 260) {
+        vx = ax / ad; vy = ay / ad;
+        // Steer toward the center when near a wall so she does not get cornered
+        const cx = (W / 2 - darya.x) / W, cy = (H / 2 - darya.y) / H;
+        const edge = Math.max(Math.abs(cx), Math.abs(cy)) > 0.32 ? 1.4 : 0.3;
+        vx += cx * edge; vy += cy * edge;
+      } else {
+        if (--darya.wander <= 0) { const a = Math.random() * 6.28; darya.vx = Math.cos(a); darya.vy = Math.sin(a); darya.wander = 60; }
+        vx = darya.vx; vy = darya.vy;
+      }
+      const vm = Math.hypot(vx, vy) || 1;
+      darya.x += vx / vm * darya.speed; darya.y += vy / vm * darya.speed;
+
+      // Keep both inside the garden
+      for (const c of [amin, darya]) { c.x = Math.max(c.r, Math.min(W - c.r, c.x)); c.y = Math.max(c.r, Math.min(H - c.r, c.y)); }
+
+      // Caught!
+      if (Math.hypot(darya.x - amin.x, darya.y - amin.y) < amin.r + darya.r - 8) {
+        score++; scoreEl.textContent = score;
+        if (score > best) { best = score; bestEl.textContent = best; }
+        darya.speed = Math.min(3.9, darya.speed + 0.08); // she gets a little quicker each time
+        burst((amin.x + darya.x) / 2, (amin.y + darya.y) / 2 - 20);
+        kissTimer = 75;
+        kissPos = { x: (amin.x + darya.x) / 2, y: (amin.y + darya.y) / 2 };
+        playKiss();
+      }
+    }
+    hearts.forEach(h => { h.x += h.vx; h.y += h.vy; h.vy += 0.05; h.life--; });
+    hearts = hearts.filter(h => h.life > 0);
+  }
+
+  // Two swans whose necks form a heart, beaks touching in the middle
+  function drawSwanHeart(cx, cy, sc, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha; ctx.translate(cx, cy); ctx.scale(sc, sc);
+    ctx.shadowColor = 'rgba(232, 87, 143, .55)'; ctx.shadowBlur = 18;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const side of [-1, 1]) {
+      ctx.save(); ctx.scale(side, 1);
+      // Neck: pink outline first, then white
+      const neck = () => {
+        ctx.beginPath(); ctx.moveTo(-26, 46);
+        ctx.bezierCurveTo(-88, 14, -98, -62, -46, -62);
+        ctx.bezierCurveTo(-22, -62, -12, -42, -10, -18);
+      };
+      neck(); ctx.lineWidth = 22; ctx.strokeStyle = '#ffb3cf'; ctx.stroke();
+      neck(); ctx.lineWidth = 15; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+      // Body and tail
+      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#ffb3cf'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(-58, 56, 46, 24, -0.12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-98, 50); ctx.lineTo(-124, 34); ctx.lineTo(-96, 64); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // Wing line
+      ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.moveTo(-86, 56); ctx.quadraticCurveTo(-60, 34, -32, 58);
+      ctx.lineWidth = 3; ctx.strokeStyle = '#f3c6d8'; ctx.stroke();
+      // Head, beak, eye
+      ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#ffb3cf'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(-10, -18, 10, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#ffb347';
+      ctx.beginPath(); ctx.moveTo(-2, -22); ctx.lineTo(10, -17); ctx.lineTo(-2, -13); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#7a2a55';
+      ctx.beginPath(); ctx.arc(-13, -21, 1.8, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Soft pastel meadow
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#e6f9dd'); g.addColorStop(1, '#c9efc4');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    flowers.forEach(f => { ctx.font = f.s + 'px serif'; ctx.fillText(f.e, f.x, f.y); });
+
+    // Characters with name tags
+    const drawChar = (c, name, img) => {
+      if (img.ok) {
+        // Circular "cover" crop of the photo with a pink border
+        const s = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - s) / 2, sy = (img.naturalHeight - s) / 2;
+        ctx.save();
+        ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2); ctx.clip();
+        ctx.drawImage(img, sx, sy, s, s, c.x - c.r, c.y - c.r, c.r * 2, c.r * 2);
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+        ctx.lineWidth = 5; ctx.strokeStyle = '#ffb3cf'; ctx.stroke();
+      } else {
+        ctx.font = '56px serif'; ctx.fillText(c.e, c.x, c.y);
+      }
+      ctx.font = '600 16px Fredoka, sans-serif';
+      ctx.fillStyle = '#fff8fb'; ctx.fillRect(c.x - 30, c.y + c.r + 6, 60, 22);
+      ctx.fillStyle = '#7a2a55'; ctx.fillText(name, c.x, c.y + c.r + 17);
+    };
+    drawChar(darya, 'Darya', photos.darya);
+    drawChar(amin, 'Amin', photos.amin);
+
+    if (kissTimer > 0) {
+      const prog = 1 - kissTimer / 75;                      // 0 -> 1 over the kiss
+      const pop = Math.min(1, prog * 6);                    // quick pop-in
+      drawSwanHeart(kissPos.x, Math.max(150, kissPos.y - 110), 0.9 * pop, Math.min(1, kissTimer / 20));
+      ctx.font = '64px Pacifico, cursive'; ctx.fillStyle = '#e8578f';
+      ctx.fillText('Mwah!', W / 2, 60);
+    }
+    hearts.forEach(h => { ctx.globalAlpha = Math.min(1, h.life / 30); ctx.font = '28px serif'; ctx.fillText(h.e, h.x, h.y); });
+    ctx.globalAlpha = 1;
+  }
+
+  (function loop() { update(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>

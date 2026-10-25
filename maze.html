@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maze of Roses</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root { --blush: #ffe4ee; --petal: #ffb3cf; --rose: #e8578f; --plum: #7a2a55; --cream: #fff8fb; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px;
+    background: radial-gradient(circle at 20% 10%, #fff 0, var(--blush) 45%, var(--petal) 100%);
+    font-family: 'Fredoka', system-ui, sans-serif; color: var(--plum);
+  }
+  h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(2rem, 4vw, 3rem); margin: 0; color: var(--rose); }
+  p.sub { margin: 0; font-size: 1.05rem; text-align: center; }
+  .hud { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center; font-weight: 600; }
+  .pill { background: var(--cream); border: 3px solid var(--petal); border-radius: 999px; padding: 6px 18px; }
+  #stage {
+    width: min(92vw, 960px); aspect-ratio: 16 / 9;
+    border: 6px solid var(--cream); border-radius: 28px;
+    box-shadow: 0 10px 40px rgba(232, 87, 143, .35);
+    background: #d9f5d3; touch-action: none;
+  }
+  button {
+    font: inherit; font-weight: 600; color: #fff; background: var(--rose);
+    border: 0; border-radius: 999px; padding: 8px 22px; cursor: pointer;
+  }
+  button:focus-visible { outline: 3px solid var(--plum); outline-offset: 3px; }
+  .back { position: fixed; top: 14px; left: 16px; z-index: 5; text-decoration: none; font-weight: 600; color: var(--plum); background: var(--cream); border: 3px solid var(--petal); border-radius: 999px; padding: 6px 16px; }
+  .back:focus-visible { outline: 3px solid var(--plum); outline-offset: 3px; }
+</style>
+</head>
+<body>
+  <a class="back" href="games.html">← All games</a>
+  <h1>Maze of Roses</h1>
+  <p class="sub">Guide Amin through the rose garden to find Darya. Use arrow keys or WASD, or press and hold on the maze.</p>
+  <div class="hud">
+    <span class="pill">Level: <span id="level">1</span></span>
+    <span class="pill">Steps: <span id="steps">0</span></span>
+    <button id="hint">Show the way</button>
+    <button id="again">New maze</button>
+  </div>
+  <canvas id="stage" width="960" height="540"></canvas>
+
+<script>
+(() => {
+  const cv = document.getElementById('stage');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const levelEl = document.getElementById('level');
+  const stepsEl = document.getElementById('steps');
+
+  // Real photos: put amin.jpg and darya.jpg next to this file (emoji is used if missing)
+  const loadImg = src => { const i = new Image(); i.ok = false; i.onload = () => { i.ok = true; }; i.src = src; return i; };
+  const photos = { amin: loadImg('amin3.jpg'), darya: loadImg('darya4.jpg') };
+
+  // Kiss sounds: kiss1.mp3 ... kiss8.mp3 (or kiss.mp3) next to this file; simple synth pop as fallback
+  const clips = ['kiss.mp3', ...Array.from({ length: 8 }, (_, i) => `kiss${i + 1}.mp3`)].map(src => {
+    const a = new Audio(src); const c = { a, ok: false };
+    a.addEventListener('canplaythrough', () => { c.ok = true; });
+    a.preload = 'auto'; a.load(); return c;
+  });
+  let actx = null, lastClip = -1;
+  function playKiss() {
+    const ready = clips.map((c, i) => i).filter(i => clips[i].ok);
+    if (ready.length) {
+      const pool = ready.length > 1 ? ready.filter(i => i !== lastClip) : ready;
+      lastClip = pool[Math.floor(Math.random() * pool.length)];
+      const a = clips[lastClip].a;
+      a.currentTime = 0; a.playbackRate = 0.92 + Math.random() * 0.18; a.volume = 0.8 + Math.random() * 0.2;
+      a.play().catch(() => {});
+      return;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    actx = actx || new AC();
+    if (actx.state === 'suspended') actx.resume();
+    const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(900 + Math.random() * 500, t);
+    o.frequency.exponentialRampToValueAtTime(180, t + 0.08);
+    g.gain.setValueAtTime(0.6, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    o.connect(g).connect(actx.destination); o.start(t); o.stop(t + 0.12);
+  }
+
+  // Maze state
+  let level = 1, steps = 0, cols, rows, cs, ox, oy, cells, segs, deco;
+  let amin, darya, state = 'play', winTimer = 0, hearts = [], hintT = 0, hintPath = [];
+  const DIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]]; // up, right, down, left
+  const held = [false, false, false, false]; // up, right, down, left
+  let queued = -1, lastHeld = -1, pointerDir = -1;
+
+  function generate() {
+    cols = Math.min(30, 8 + level * 2);
+    rows = Math.max(5, Math.round(cols * 9 / 16));
+    cs = Math.floor(Math.min((W - 24) / cols, (H - 24) / rows));
+    ox = (W - cols * cs) / 2; oy = (H - rows * cs) / 2;
+
+    // Depth-first carving: every cell starts with all four walls
+    cells = Array.from({ length: cols * rows }, () => ({ w: [true, true, true, true], seen: false }));
+    const stack = [[0, 0]]; cells[0].seen = true;
+    while (stack.length) {
+      const [c, r] = stack[stack.length - 1];
+      const opts = [];
+      DIRS.forEach(([dx, dy], d) => {
+        const nc = c + dx, nr = r + dy;
+        if (nc >= 0 && nr >= 0 && nc < cols && nr < rows && !cells[nr * cols + nc].seen) opts.push([d, nc, nr]);
+      });
+      if (!opts.length) { stack.pop(); continue; }
+      const [d, nc, nr] = opts[Math.floor(Math.random() * opts.length)];
+      cells[r * cols + c].w[d] = false;
+      cells[nr * cols + nc].w[(d + 2) % 4] = false;
+      cells[nr * cols + nc].seen = true;
+      stack.push([nc, nr]);
+    }
+
+    // Wall segments (grid coordinates) and rose decorations on some of them
+    segs = []; deco = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const w = cells[r * cols + c].w;
+      if (w[0]) segs.push([c, r, c + 1, r]);
+      if (w[3]) segs.push([c, r, c, r + 1]);
+      if (r === rows - 1 && w[2]) segs.push([c, r + 1, c + 1, r + 1]);
+      if (c === cols - 1 && w[1]) segs.push([c + 1, r, c + 1, r + 1]);
+    }
+    segs.forEach(([a, b, c2, d]) => {
+      if (Math.random() < 0.25) deco.push({ x: (a + c2) / 2, y: (b + d) / 2, e: ['🌹', '🌸', '🌷', '🌺'][Math.floor(Math.random() * 4)] });
+    });
+
+    amin = { c: 0, r: 0, x: cx(0), y: cy(0) };
+    darya = { c: cols - 1, r: rows - 1 };
+    state = 'play'; hearts = []; hintT = 0; steps = 0;
+    levelEl.textContent = level; stepsEl.textContent = 0;
+  }
+  const cx = c => ox + (c + 0.5) * cs;
+  const cy = r => oy + (r + 0.5) * cs;
+
+  // Shortest path (BFS) from Amin to Darya for the hint
+  function findPath() {
+    const prev = new Map(), start = amin.r * cols + amin.c, goal = darya.r * cols + darya.c;
+    const q = [start]; prev.set(start, -1);
+    while (q.length) {
+      const cur = q.shift(); if (cur === goal) break;
+      const c = cur % cols, r = Math.floor(cur / cols);
+      DIRS.forEach(([dx, dy], d) => {
+        if (cells[cur].w[d]) return;
+        const n = (r + dy) * cols + (c + dx);
+        if (!prev.has(n)) { prev.set(n, cur); q.push(n); }
+      });
+    }
+    const path = []; for (let n = goal; n !== -1; n = prev.get(n)) path.push(n);
+    return path.reverse();
+  }
+
+  // Works with any keyboard layout (including Persian): WASD is read by physical key position
+  const KEYDIR = { ArrowUp: 0, KeyW: 0, ArrowRight: 1, KeyD: 1, ArrowDown: 2, KeyS: 2, ArrowLeft: 3, KeyA: 3 };
+  addEventListener('keydown', e => {
+    const d = KEYDIR[e.code];
+    if (d === undefined) return;
+    e.preventDefault();
+    held[d] = true; lastHeld = d; queued = d; // queued: a quick tap is never lost mid-glide
+  });
+  addEventListener('keyup', e => {
+    const d = KEYDIR[e.code];
+    if (d !== undefined) held[d] = false;
+  });
+  addEventListener('blur', () => { held.fill(false); pointerDir = -1; });
+
+  // Mouse / touch: press and hold on the maze to walk toward that side of Amin
+  const aimAt = e => {
+    const b = cv.getBoundingClientRect();
+    const dx = (e.clientX - b.left) * W / b.width - amin.x, dy = (e.clientY - b.top) * H / b.height - amin.y;
+    pointerDir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 1 : 3) : (dy > 0 ? 2 : 0);
+  };
+  cv.addEventListener('pointerdown', e => { window.focus(); aimAt(e); queued = pointerDir; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (pointerDir >= 0) aimAt(e); });
+  cv.addEventListener('pointerup', () => { pointerDir = -1; });
+  cv.addEventListener('pointercancel', () => { pointerDir = -1; });
+  document.getElementById('again').onclick = generate;
+  document.getElementById('hint').onclick = () => { if (state === 'play') { hintPath = findPath(); hintT = 170; } };
+
+  function update() {
+    const moving = Math.hypot(cx(amin.c) - amin.x, cy(amin.r) - amin.y) > 0.5;
+    if (state === 'play' && !moving) {
+      let d = queued; queued = -1;
+      if (d < 0 && lastHeld >= 0 && held[lastHeld]) d = lastHeld;
+      if (d < 0) d = held.findIndex(Boolean);
+      if (d < 0) d = pointerDir;
+      if (d >= 0 && !cells[amin.r * cols + amin.c].w[d]) {
+        amin.c += DIRS[d][0]; amin.r += DIRS[d][1];
+        stepsEl.textContent = ++steps;
+      }
+    }
+    // Glide toward the current cell
+    const dx = cx(amin.c) - amin.x, dy = cy(amin.r) - amin.y, dist = Math.hypot(dx, dy), sp = cs * 0.22;
+    if (dist > 0.5) { const m = Math.min(sp, dist) / dist; amin.x += dx * m; amin.y += dy * m; }
+    else { amin.x = cx(amin.c); amin.y = cy(amin.r); }
+
+    if (state === 'play' && amin.c === darya.c && amin.r === darya.r && dist <= 0.5) {
+      state = 'win'; winTimer = 120; playKiss();
+      for (let i = 0; i < 26; i++) {
+        const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3.5;
+        hearts.push({ x: amin.x, y: amin.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, life: 80, e: Math.random() < .5 ? '💗' : '💖' });
+      }
+    }
+    if (state === 'win' && --winTimer <= 0) { level++; generate(); }
+    hearts.forEach(h => { h.x += h.vx; h.y += h.vy; h.vy += 0.05; h.life--; });
+    hearts = hearts.filter(h => h.life > 0);
+    if (hintT > 0) hintT--;
+  }
+
+  function drawChar(x, y, img, emoji, name) {
+    const r = cs * 0.4;
+    if (img.ok) {
+      const s = Math.min(img.naturalWidth, img.naturalHeight);
+      ctx.save(); ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, x - r, y - r, r * 2, r * 2);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.lineWidth = Math.max(2, cs * 0.08); ctx.strokeStyle = '#ffb3cf'; ctx.stroke();
+    } else {
+      ctx.font = (cs * 0.8) + 'px serif'; ctx.fillText(emoji, x, y);
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#e6f9dd'); g.addColorStop(1, '#c9efc4');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+
+    // Hedge walls
+    ctx.lineCap = 'round'; ctx.strokeStyle = '#7cc47f'; ctx.lineWidth = Math.max(5, cs * 0.2);
+    ctx.beginPath();
+    segs.forEach(([a, b, c, d]) => { ctx.moveTo(ox + a * cs, oy + b * cs); ctx.lineTo(ox + c * cs, oy + d * cs); });
+    ctx.stroke();
+    ctx.font = (cs * 0.5) + 'px serif';
+    deco.forEach(d => ctx.fillText(d.e, ox + d.x * cs, oy + d.y * cs));
+
+    // Hint: a trail of petals along the shortest path
+    if (hintT > 0) {
+      ctx.globalAlpha = Math.min(1, hintT / 30);
+      ctx.font = (cs * 0.4) + 'px serif';
+      hintPath.forEach(n => ctx.fillText('🌸', cx(n % cols), cy(Math.floor(n / cols))));
+      ctx.globalAlpha = 1;
+    }
+
+    drawChar(cx(darya.c), cy(darya.r), photos.darya, '👩', 'Darya');
+    drawChar(amin.x, amin.y, photos.amin, '🧑', 'Amin');
+
+    if (state === 'win') {
+      ctx.font = '64px Pacifico, cursive'; ctx.fillStyle = '#e8578f';
+      ctx.fillStyle = 'rgba(255, 248, 251, .85)'; ctx.fillRect(W / 2 - 220, H / 2 - 50, 440, 100);
+      ctx.fillStyle = '#e8578f'; ctx.fillText('Found you!', W / 2, H / 2);
+    }
+    hearts.forEach(h => { ctx.globalAlpha = Math.min(1, h.life / 30); ctx.font = '28px serif'; ctx.fillText(h.e, h.x, h.y); });
+    ctx.globalAlpha = 1;
+  }
+
+  window.focus();
+  generate();
+  (function loop() { update(); draw(); requestAnimationFrame(loop); })();
+})();
+</script>
+</body>
+</html>
