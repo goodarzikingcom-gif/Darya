@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A Promise</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root { --gold1: #fff1b8; --gold2: #e8b94a; --ink: #f6efff; --dim: #b9a9e6; --line: rgba(245, 213, 138, .3); }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #06030f; color: var(--ink); font-family: 'Poppins', system-ui, sans-serif; }
+  canvas { position: fixed; inset: 0; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+  button, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold2); outline-offset: 2px; }
+  .layer { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+
+  /* Lock */
+  #lock { z-index: 5; gap: 18px; background: radial-gradient(circle at 50% 30%, #1d0f55 0, #06030f 75%); transition: opacity .9s ease; }
+  #lock.gone { opacity: 0; pointer-events: none; }
+  #lock h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: 2rem; margin: 0; background: linear-gradient(135deg, var(--gold1), var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #lock p { margin: 0; color: var(--dim); font-size: .95rem; }
+  .dots { display: flex; gap: 14px; height: 18px; }
+  .dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--gold2); transition: background .15s, transform .15s; }
+  .dots i.on { background: var(--gold2); transform: scale(1.15); box-shadow: 0 0 12px rgba(232, 185, 74, .8); }
+  .dots.shake { animation: shake .4s; }
+  @keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+  .pad { display: grid; grid-template-columns: repeat(3, 74px); gap: 14px; }
+  .pad button { width: 74px; height: 74px; border-radius: 50%; border: 1px solid var(--line); background: rgba(255, 255, 255, .06); font-size: 1.5rem; font-weight: 500; backdrop-filter: blur(6px); transition: transform .1s, background .2s; }
+  .pad button:active { transform: scale(.92); background: rgba(232, 185, 74, .3); }
+  .pad .ghost { visibility: hidden; }
+
+  /* Hint */
+  #hint { position: fixed; left: 0; right: 0; bottom: calc(40px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 1.05rem; color: var(--gold1); letter-spacing: .04em; opacity: 0; transition: opacity .8s; pointer-events: none; text-shadow: 0 0 14px rgba(232, 185, 74, .6); z-index: 3; }
+  #hint.on { opacity: .95; animation: breathe 2.4s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity: .45; } }
+
+  /* Final */
+  #final { z-index: 4; justify-content: flex-start; gap: 12px; overflow-y: auto; padding: calc(8vh + env(safe-area-inset-top, 0px)) 22px calc(40px + env(safe-area-inset-bottom, 0px)); opacity: 0; pointer-events: none; transition: opacity 1.2s ease; }
+  #final.on { opacity: 1; pointer-events: auto; }
+  #promise { font-family: 'Pacifico', cursive; font-size: clamp(2rem, 8.5vw, 3.6rem); line-height: 1.3; margin: 0; max-width: 16ch; min-height: 3.9em;
+    background: linear-gradient(135deg, #fff, var(--gold1) 40%, var(--gold2)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 18px rgba(255, 225, 150, .55)); }
+  .stamp { margin: 0; display: inline-flex; align-items: center; gap: 8px; border: 2px solid var(--gold2); color: var(--gold1); border-radius: 10px; padding: 6px 14px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: .78rem;
+    transform: rotate(-4deg) scale(1.6); opacity: 0; transition: transform .45s cubic-bezier(.2, 1.6, .4, 1), opacity .3s; }
+  .stamp.on { transform: rotate(-4deg) scale(1); opacity: .95; }
+  .stamp small { display: block; font-weight: 400; letter-spacing: .04em; text-transform: none; font-size: .72rem; color: var(--dim); }
+  .reply { width: min(100%, 420px); margin-top: 10px; display: flex; flex-direction: column; gap: 10px; opacity: 0; transition: opacity 1s; background: rgba(255, 255, 255, .06); border: 1px solid var(--line); border-radius: 22px; padding: 16px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .reply.on { opacity: 1; }
+  .reply label { font-size: .88rem; color: var(--dim); text-align: left; }
+  .reply textarea { min-height: 88px; resize: vertical; border-radius: 14px; border: 1px solid var(--line); background: rgba(8, 3, 30, .55); padding: 12px 14px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .btn { border: 1px solid var(--line); background: rgba(255, 255, 255, .07); border-radius: 999px; padding: 8px 18px; font-weight: 500; font-size: .9rem; }
+  .btn.gold { background: linear-gradient(135deg, var(--gold1), var(--gold2) 60%, #c48a2c); color: #2a1700; border-color: transparent; font-weight: 600; }
+  #hers { font-family: 'Pacifico', cursive; font-size: 1.4rem; line-height: 1.4; margin: 0; color: #ffd6ec; text-shadow: 0 0 16px rgba(255, 122, 168, .6); max-width: 24ch; white-space: pre-wrap; word-break: break-word; }
+  #hersLabel { margin: 0; color: var(--dim); font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; }
+  .note { margin: 0; font-size: .82rem; color: var(--dim); min-height: 1.2em; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .01s !important; } #hint.on { animation: none; } }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Two glowing hands reach toward each other to make a pinky promise"></canvas>
+
+<div id="hint">Hold your finger on the screen</div>
+
+<div class="layer" id="final">
+  <p id="promise" aria-live="polite"></p>
+  <p class="stamp" id="stamp"><span>✦ Sealed ✦<small id="date"></small></span></p>
+  <p id="hersLabel" hidden>Darya's promise</p>
+  <p id="hers" hidden></p>
+  <div class="reply" id="reply">
+    <label for="msg">Your turn. Write a promise back, if you would like.</label>
+    <textarea id="msg" maxlength="280" placeholder="I promise…"></textarea>
+    <div class="row"><button class="btn gold" id="add">Add it</button><button class="btn" id="share">Share</button><button class="btn" id="again">↻ Again</button></div>
+    <p class="note" id="note"></p>
+  </div>
+</div>
+
+<div class="layer" id="lock">
+  <h1>Just for you</h1>
+  <p>Enter the code</p>
+  <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="pad"></div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cv = $('c'), ctx = cv.getContext('2d');
+  const PROMISE = 'I promise to always be there for you';
+  const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+  const ease = k => k * k * (3 - 2 * k), rnd = (a, b) => a + Math.random() * (b - a);
+
+  // ---------- Lock: only a salted hash of the code is stored here ----------
+  const LOCK = '6291962569984926';
+  const cyrb53 = (str, seed = 0) => {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (let i = 0, ch; i < str.length; i++) { ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507); h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507); h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  };
+  const lockOf = pin => { let x = 'pinky-salt-v1:' + pin; for (let i = 0; i < 3000; i++) x = String(cyrb53(x, i)); return x; };
+
+  let code = '', tries = 0;
+  const dots = [...$('dots').children];
+  '123456789 0⌫'.split('').forEach(k => {
+    const b = document.createElement('button'); b.textContent = k === ' ' ? '' : k; if (k === ' ') b.className = 'ghost';
+    b.addEventListener('click', () => key(k)); $('pad').appendChild(b);
+  });
+  function key(k) {
+    if (k === ' ') return; audio();
+    if (k === '⌫') code = code.slice(0, -1); else if (code.length < 4) code += k;
+    dots.forEach((d, i) => d.classList.toggle('on', i < code.length));
+    if (code.length === 4) setTimeout(check, 120);
+  }
+  function check() {
+    if (lockOf(code) === LOCK) { sessionStorage.setItem('pinky-ok', '1'); unlock(); }
+    else { tries++; $('dots').classList.add('shake'); setTimeout(() => { $('dots').classList.remove('shake'); code = ''; dots.forEach(d => d.classList.remove('on')); }, 420); }
+  }
+  document.addEventListener('keydown', e => { if (stage === 'lock') { if (/^\d$/.test(e.key)) key(e.key); else if (e.key === 'Backspace') key('⌫'); } });
+  function unlock() { $('lock').classList.add('gone'); stage = 'hold'; $('hint').classList.add('on'); }
+
+  // ---------- Audio and haptics ----------
+  let ac = null, nb = null, holdOsc = null, holdGain = null;
+  function audio() {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    if (!ac) { ac = new AC(); nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    if (ac.state === 'suspended') ac.resume(); return ac;
+  }
+  function tone(f, dur, type, vol, at) {
+    const a = audio(); if (!a) return; const t = a.currentTime + (at || 0), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(type, f0, f1, dur, vol) {
+    const a = audio(); if (!a) return; const t = a.currentTime, s = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    s.buffer = nb; f.type = type; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); s.connect(f).connect(g).connect(a.destination); s.start(t, rnd(0, 1)); s.stop(t + dur + 0.05);
+  }
+  function holdSound(on, p) {
+    const a = audio(); if (!a) return;
+    if (on && !holdOsc) { holdOsc = a.createOscillator(); holdGain = a.createGain(); holdOsc.type = 'sine'; holdGain.gain.value = 0.0001; holdOsc.connect(holdGain).connect(a.destination); holdOsc.start(); }
+    if (holdOsc) { const t = a.currentTime; holdOsc.frequency.setTargetAtTime(110 + 330 * p, t, 0.1); holdGain.gain.setTargetAtTime(on ? 0.04 + 0.1 * p : 0.0001, t, 0.15); if (!on && p <= 0) { try { holdOsc.stop(t + 0.4); } catch (e) { /* already stopped */ } holdOsc = null; } }
+  }
+  const buzz = pat => { try { if (navigator.vibrate) navigator.vibrate(pat); } catch (e) { /* ignore */ } };
+  const chime = () => [659.25, 830.61, 987.77, 1318.5].forEach((f, i) => { tone(f, 1.6, 'triangle', 0.12, i * 0.12); tone(f * 2, 1.2, 'sine', 0.04, i * 0.12); });
+  const boom = () => { noise('lowpass', 1600, 60, 2.2, 1); tone(90, 1.6, 'sine', 0.8); for (let i = 0; i < 14; i++) setTimeout(() => noise('highpass', 3000, 7000, 0.06, 0.22), 200 + i * rnd(60, 160)); [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, 3, 'triangle', 0.08, 0.5 + i * 0.1)); };
+
+  // ---------- Layout ----------
+  let W = 0, H = 0, DPR = 1, S = 1;
+  function resize() { DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = Math.floor(W * DPR); cv.height = Math.floor(H * DPR); cv.style.width = W + 'px'; cv.style.height = H + 'px'; S = Math.min(W * 0.92, H * 1.0); buildSprites(); }
+  window.addEventListener('resize', resize);
+
+  // ---------- Hands: two clearly drawn fists with only the little finger out, glowing like neon ----------
+  // Local units (multiplied by S). The sprite shows the LEFT hand with its little finger pointing right; the right hand is the mirror image.
+  const SB = { L: -1.15, R: 0.48, T: -0.3, B: 0.3 };
+  const WARM = { top: '#ff9fc2', mid: '#c4507f', bot: '#6f2370', line: '#ffe7a8', glow: '#ffb347' };
+  const COOL = { top: '#b9a8ff', mid: '#6a62e0', bot: '#2a2a8c', line: '#d9e8ff', glow: '#7aa8ff' };
+  let sprites = null;
+  function drawHandShape(g, pal, dpr) {
+    const lw = 0.0075;
+    const rr = (x, y, w, h, r) => { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); };
+    const body = (y0, y1) => { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, pal.top); gr.addColorStop(1, pal.bot); return gr; };
+    const glow = on => { g.shadowColor = pal.glow; g.shadowBlur = on ? 9 * dpr : 0; };
+    const tube = (path, width) => {                               // an outlined tube: used for the thumb and the little finger
+      g.lineCap = 'round'; g.lineJoin = 'round'; path(); g.lineWidth = width + 2 * lw; g.strokeStyle = pal.line; glow(true); g.stroke();
+      glow(false); path(); g.lineWidth = width; g.strokeStyle = pal.mid; g.stroke();
+    };
+    const solid = (shape, fill) => { shape(); g.fillStyle = fill; glow(false); g.fill(); g.lineWidth = lw; g.strokeStyle = pal.line; glow(true); g.stroke(); glow(false); };
+    // forearm, fading out toward the screen edge
+    solid(() => rr(-1.15, -0.098, 1.03, 0.2, 0.06), body(-0.1, 0.1));
+    g.globalCompositeOperation = 'destination-in'; const fade = g.createLinearGradient(-1.15, 0, -0.5, 0); fade.addColorStop(0, 'rgba(0,0,0,0)'); fade.addColorStop(1, 'rgba(0,0,0,1)');
+    g.fillStyle = fade; g.fillRect(-1.2, -0.4, 1.8, 0.8); g.globalCompositeOperation = 'source-over';
+    // little finger (behind the fist), then its hooked tip
+    tube(() => { g.beginPath(); g.moveTo(0.02, 0.09); g.lineTo(0.26, 0.085); g.arc(0.26, 0.035, 0.05, Math.PI / 2, -Math.PI * 0.93, true); }, 0.056);
+    // fist
+    solid(() => rr(-0.17, -0.135, 0.27, 0.255, 0.075), body(-0.14, 0.12));
+    // three curled fingers
+    [-0.118, -0.056, 0.006].forEach((y, i) => {
+      solid(() => rr(-0.01, y, 0.14 + (i === 1 ? 0.012 : 0), 0.062, 0.031), body(-0.14, 0.12));
+      g.beginPath(); g.arc(0.098 + (i === 1 ? 0.012 : 0), y + 0.031, 0.009, 0, 6.283); g.fillStyle = 'rgba(255,255,255,.6)'; g.fill();
+    });
+    // thumb laid across the top of the fingers, with its nail
+    tube(() => { g.beginPath(); g.moveTo(-0.115, -0.108); g.lineTo(0.06, -0.136); }, 0.076);
+    g.beginPath(); g.ellipse(0.068, -0.138, 0.019, 0.014, -0.15, 0, 6.283); g.lineWidth = lw * 0.9; g.strokeStyle = 'rgba(255,255,255,.85)'; g.stroke();
+  }
+  function buildSprites() {
+    const k = S * DPR, w = Math.ceil((SB.R - SB.L) * k), h = Math.ceil((SB.B - SB.T) * k);
+    sprites = [WARM, COOL].map(pal => { const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.setTransform(k, 0, 0, k, -SB.L * k, -SB.T * k); drawHandShape(g, pal, DPR); return c; });
+  }
+  const hands = [{ side: -1 }, { side: 1 }];
+
+  // ---------- State ----------
+  let stage = sessionStorage.getItem('pinky-ok') === '1' ? 'hold' : 'lock', t0 = 0, last = 0, p = 0, holding = false, touch = { x: 0, y: 0 };
+  let free = [], rings = [], flash = 0, shake = 0, boomAt = 0, rayAng = 0, typed = false;
+  const stars = Array.from({ length: 160 }, () => ({ x: Math.random(), y: Math.random(), r: rnd(0.4, 1.6), p: Math.random() * 6.28, s: rnd(0.6, 2) }));
+  const now = () => performance.now() / 1000;
+  const center = () => ({ x: W / 2, y: H * 0.46 + 0.043 * S });                      // where the two little fingers hook
+  if (stage === 'hold') { $('lock').classList.add('gone'); $('hint').classList.add('on'); }
+
+  function handXY(h, pp, t) {
+    const fin = W / 2 + h.side * 0.30 * S, away = (1 - ease(pp)) * 0.27 * S, trem = (1 - pp) * 2 * Math.sin(t * 9 + h.side) * pp;
+    return { ox: fin + h.side * away, oy: H * 0.46 + (h.side > 0 ? 0.016 * S : 0) + Math.sin(t * 1.3 + h.side) * 4 * (1 - pp) + trem, rot: h.side * 0.14 * (1 - ease(pp)) };
+  }
+  let dust = [];
+  function drawHands(t, alpha) {
+    if (!sprites) return;
+    hands.forEach((h, i) => {
+      const { ox, oy, rot } = handXY(h, p, t);
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(ox, oy); ctx.rotate(rot); ctx.scale(h.side > 0 ? -1 : 1, 1);
+      ctx.drawImage(sprites[i], SB.L * S, SB.T * S, (SB.R - SB.L) * S, (SB.B - SB.T) * S); ctx.restore();
+      if (alpha > 0 && Math.random() < 0.5) dust.push({ x: ox - h.side * rnd(-0.1, 0.32) * S, y: oy + rnd(-0.14, 0.12) * S, vy: rnd(-0.5, -0.1), life: 0, max: rnd(1, 2.2), c: h.side < 0 ? '#ffe29a' : '#cfe0ff' });
+    });
+    ctx.globalCompositeOperation = 'lighter';
+    dust.forEach(d => { d.life += 0.016; d.y += d.vy; ctx.globalAlpha = Math.max(0, 1 - d.life / d.max) * 0.8 * alpha; ctx.fillStyle = d.c; ctx.fillRect(d.x, d.y, 1.8, 1.8); });
+    dust = dust.filter(d => d.life < d.max); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // The red thread: it wraps both little fingers, then draws a lemniscate around the scene and ends in a bow
+  function threadPoint(u) { const c = center(), a = Math.min(W * 0.46, H * 0.36), t = Math.PI / 2 + u * 2 * Math.PI, d = 1 + Math.sin(t) * Math.sin(t); return [c.x + a * Math.cos(t) / d, c.y + a * Math.sin(t) * Math.cos(t) / d]; }
+  function drawThread(k, bow) {
+    const c = center(), w = 2.4 + 0.8 * Math.sin(now() * 6);
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const wrap = clamp(k * 6);                                                      // the first part of the thread winds around the hooked fingers
+    ctx.beginPath(); for (let i = 0; i <= 60 * wrap; i++) { const s = i / 60, ang = s * 6 * Math.PI; const x = c.x + Math.cos(ang) * 0.075 * S * (1 - s * 0.3), y = c.y + 0.012 * S + Math.sin(ang) * 0.05 * S; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.strokeStyle = 'rgba(255,90,110,.95)'; ctx.lineWidth = w; ctx.shadowColor = '#ff506e'; ctx.shadowBlur = 16; ctx.stroke();
+    const u1 = clamp((k - 0.1) / 0.9); ctx.beginPath(); const n = Math.floor(240 * u1);
+    for (let i = 0; i <= n; i++) { const [x, y] = threadPoint(i / 240); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    const gr = ctx.createLinearGradient(c.x - W * 0.4, 0, c.x + W * 0.4, 0); gr.addColorStop(0, '#ff5070'); gr.addColorStop(0.5, '#ffd27a'); gr.addColorStop(1, '#ff5070');
+    ctx.strokeStyle = gr; ctx.lineWidth = w; ctx.shadowColor = '#ffb050'; ctx.shadowBlur = 18; ctx.stroke();
+    if (u1 > 0 && u1 < 1) { const [hx, hy] = threadPoint(u1); const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, 26); g.addColorStop(0, 'rgba(255,240,200,1)'); g.addColorStop(1, 'rgba(255,160,80,0)'); ctx.shadowBlur = 0; ctx.fillStyle = g; ctx.fillRect(hx - 26, hy - 26, 52, 52); }
+    if (bow > 0) {                                                                  // bow at the knot
+      ctx.globalAlpha = bow; ctx.shadowBlur = 14; ctx.strokeStyle = '#ff6a84'; ctx.lineWidth = 3;
+      [-1, 1].forEach(sg => { ctx.beginPath(); ctx.ellipse(c.x + sg * 0.05 * S, c.y - 0.05 * S, 0.05 * S, 0.026 * S, sg * -0.5, 0, 6.283); ctx.stroke(); ctx.beginPath(); ctx.moveTo(c.x, c.y - 0.03 * S); ctx.quadraticCurveTo(c.x + sg * 0.03 * S, c.y + 0.05 * S, c.x + sg * 0.07 * S, c.y + 0.1 * S); ctx.stroke(); });
+      ctx.globalAlpha = 1;
+    }
+    ctx.shadowBlur = 0; ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function explode() {
+    const c = center(); boomAt = now(); stage = 'boom'; flash = 1; shake = 1; boom(); buzz([40, 30, 120, 40, 200]);
+    if (sprites) hands.forEach((h, i) => {
+      const { ox, oy, rot } = handXY(h, 1, now()), cr = Math.cos(rot), sr = Math.sin(rot), sp = sprites[i], g2 = sp.getContext('2d'), k = S * DPR;
+      const data = g2.getImageData(0, 0, sp.width, sp.height).data;
+      for (let n = 0, got = 0; n < 40000 && got < 2400; n++) {
+        const px = Math.floor(Math.random() * sp.width), py = Math.floor(Math.random() * sp.height), o = (py * sp.width + px) * 4; if (data[o + 3] < 140) continue; got++;
+        const lx = (SB.L + px / k) * S * (h.side > 0 ? -1 : 1), ly = (SB.T + py / k) * S, x = ox + lx * cr - ly * sr, y = oy + lx * sr + ly * cr;
+        const a = Math.atan2(y - c.y, x - c.x) + rnd(-0.5, 0.5), v = rnd(1.5, 11) * (S / 600);
+        free.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: rnd(1.4, 3.4), c: 'rgb(' + data[o] + ',' + data[o + 1] + ',' + data[o + 2] + ')', s: rnd(1.4, 2.6), g: 0.02 });
+      }
+    });
+    const pal = ['#fff1b8', '#ffd27a', '#ffffff', '#ff9ec7', '#c9a8ff', '#8fb4ff'];
+    for (let i = 0; i < 1800; i++) { const a = rnd(0, 6.283), sp = Math.pow(Math.random(), 0.5) * 16 * (S / 600); free.push({ x: c.x, y: c.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0, max: rnd(1.2, 4), c: pal[i % pal.length], s: rnd(1.2, 3), g: 0.012 }); }
+    rings = [0, 0.12, 0.28].map(d => ({ r: 0, d, w: 5 - d * 8 }));
+    setTimeout(() => { typed = true; $('final').classList.add('on'); typeText(); }, 1300);
+  }
+
+  function typeText() {
+    const el = $('promise'); el.textContent = ''; let i = 0;
+    const iv = setInterval(() => { el.textContent = PROMISE.slice(0, ++i); if (i >= PROMISE.length) { clearInterval(iv); setTimeout(showStamp, 500); } }, 70);
+  }
+  function showStamp() {
+    let d = localStorage.getItem('pinky-date'); if (!d) { d = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }); try { localStorage.setItem('pinky-date', d); } catch (e) { /* ignore */ } }
+    $('date').textContent = d; $('stamp').classList.add('on'); buzz(30); tone(196, 0.5, 'sine', 0.2); noise('lowpass', 600, 100, 0.25, 0.4);
+    setTimeout(() => $('reply').classList.add('on'), 700); showHers();
+  }
+  function showHers() {
+    let v = ''; try { v = localStorage.getItem('pinky-hers') || ''; } catch (e) { /* ignore */ }
+    $('hers').hidden = $('hersLabel').hidden = !v; $('hers').textContent = v; $('msg').value = v;
+  }
+
+  // ---------- Frame ----------
+  function background(t) {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#05020e'); g.addColorStop(1, '#14083a'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff'; stars.forEach(s => { ctx.globalAlpha = 0.25 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.s + s.p)); ctx.fillRect(s.x * W, s.y * H, s.r, s.r); }); ctx.globalAlpha = 1;
+  }
+  function glowBackground(k, t) {
+    const c = center(), R = Math.max(W, H);
+    const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, R * 0.8); g.addColorStop(0, 'rgba(255,236,170,' + 0.95 * k + ')'); g.addColorStop(0.25, 'rgba(255,170,110,' + 0.55 * k + ')'); g.addColorStop(0.6, 'rgba(120,70,220,' + 0.45 * k + ')'); g.addColorStop(1, 'rgba(10,4,40,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter'; rayAng += 0.003;
+    for (let i = 0; i < 14; i++) { const a = rayAng + i * Math.PI * 2 / 14, w = 0.07 + 0.03 * Math.sin(t + i); ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(c.x + Math.cos(a - w) * R, c.y + Math.sin(a - w) * R); ctx.lineTo(c.x + Math.cos(a + w) * R, c.y + Math.sin(a + w) * R); ctx.closePath(); ctx.fillStyle = 'rgba(255,225,160,' + 0.07 * k + ')'; ctx.fill(); }
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  function frame() {
+    const tn = now(), dt = Math.min(0.05, tn - last || 0.016); last = tn; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (shake > 0) { ctx.translate(rnd(-1, 1) * shake * 14, rnd(-1, 1) * shake * 14); shake = Math.max(0, shake - dt * 1.6); }
+    background(tn);
+    if (stage === 'hold') {
+      p = clamp(p + (holding ? dt / 3.4 : -dt / 1.8)); holdSound(holding || p > 0, p);
+      $('hint').classList.toggle('on', p < 0.05 || !holding && p < 0.98);
+      if (p >= 1) { stage = 'linked'; t0 = tn; holding = false; holdSound(false, 0); chime(); buzz([30, 40, 80]); const c = center(); rings.push({ r: 0, d: 0, w: 3, x: c.x, y: c.y }); $('hint').classList.remove('on'); }
+    }
+    if (stage === 'lock' || stage === 'hold' || stage === 'linked' || stage === 'thread') {
+      drawHands(tn, stage === 'lock' ? 0.0 : 1);
+      if (stage === 'hold' && holding) {                                           // a ring fills around the finger
+        ctx.strokeStyle = 'rgba(255,225,150,.9)'; ctx.lineWidth = 4; ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 14; ctx.beginPath(); ctx.arc(touch.x, touch.y, 38, -Math.PI / 2, -Math.PI / 2 + p * 2 * Math.PI); ctx.stroke(); ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(touch.x, touch.y, 38, 0, 6.283); ctx.stroke();
+      }
+    }
+    if (stage === 'linked' && tn - t0 > 0.9) { stage = 'thread'; t0 = tn; }
+    if (stage === 'thread') { const k = clamp((tn - t0) / 3.0), bow = clamp((tn - t0 - 2.9) / 0.6); drawThread(k, bow); if (tn - t0 > 3.9) explode(); }
+    if (stage === 'linked') { const c = center(); const g = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 90 * S / 600 + 40 * (tn - t0)); g.addColorStop(0, 'rgba(255,230,170,' + 0.5 * (1 - (tn - t0)) + ')'); g.addColorStop(1, 'rgba(255,170,100,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); }
+    if (stage === 'boom') {
+      const tb = tn - boomAt, k = clamp(tb / 1.4); glowBackground(Math.min(1, tb / 1.2), tn);
+      free.forEach(q => { q.life += dt; q.x += q.vx; q.y += q.vy; q.vy += q.g; q.vx *= 0.992; q.vy *= 0.992; });
+      free = free.filter(q => q.life < q.max);
+      ctx.globalCompositeOperation = 'lighter'; free.forEach(q => { ctx.globalAlpha = Math.pow(1 - q.life / q.max, 1.3); ctx.fillStyle = q.c; ctx.fillRect(q.x, q.y, q.s, q.s); }); ctx.globalAlpha = 1;
+      rings.forEach(r => { const rt = tb - r.d; if (rt <= 0) return; const rr = rt * Math.max(W, H) * 0.9, c = center(); ctx.strokeStyle = 'rgba(255,240,200,' + clamp(1 - rt / 1.6) * 0.9 + ')'; ctx.lineWidth = Math.max(1, r.w * (1 - rt / 1.6)); ctx.beginPath(); ctx.arc(c.x, c.y, rr, 0, 6.283); ctx.stroke(); });
+      ctx.globalCompositeOperation = 'source-over';
+      if (flash > 0) { ctx.fillStyle = 'rgba(255,248,225,' + flash + ')'; ctx.fillRect(0, 0, W, H); flash = Math.max(0, flash - dt * 0.9); }
+      if (typed && Math.random() < 0.25) { free.push({ x: rnd(0, W), y: H + 10, vx: rnd(-0.3, 0.3), vy: rnd(-1.6, -0.6), life: 0, max: rnd(3, 6), c: ['#fff1b8', '#ffd27a', '#ffffff'][Math.floor(Math.random() * 3)], s: rnd(1, 2.4), g: 0 }); }
+    }
+    // pulse ring when the little fingers lock
+    if (stage === 'linked' || stage === 'thread') rings.forEach(r => { if (r.x === undefined) return; r.r += dt * 360; ctx.strokeStyle = 'rgba(255,235,180,' + clamp(1 - r.r / 420) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, 6.283); ctx.stroke(); });
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Input ----------
+  const down = e => { if (stage !== 'hold') return; audio(); holding = true; const b = cv.getBoundingClientRect(); touch = { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  const move = e => { if (!holding) return; const b = cv.getBoundingClientRect(); touch = { x: e.clientX - b.left, y: e.clientY - b.top }; };
+  const up = () => { holding = false; };
+  cv.addEventListener('pointerdown', down); cv.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+  document.addEventListener('keydown', e => { if (stage === 'hold' && e.code === 'Space') { e.preventDefault(); holding = true; touch = { x: W / 2, y: H * 0.78 }; } });
+  document.addEventListener('keyup', e => { if (e.code === 'Space') holding = false; });
+
+  $('add').addEventListener('click', () => {
+    const v = $('msg').value.trim(); try { localStorage.setItem('pinky-hers', v); } catch (e) { /* ignore */ }
+    showHers(); $('note').textContent = v ? 'Added. It stays on this device.' : 'Nothing to add yet.'; if (v) { tone(783.99, 1, 'triangle', 0.12); buzz(25); }
+  });
+  $('share').addEventListener('click', async () => {
+    const mine = $('msg').value.trim(), text = mine ? 'My pinky promise: ' + mine : 'A pinky promise 💍';
+    try { if (navigator.share) { await navigator.share({ title: 'Our pinky promise', text }); return; } } catch (e) { return; }
+    try { await navigator.clipboard.writeText(text); $('note').textContent = 'Copied. Paste it in a message.'; } catch (e) { $('msg').select(); $('note').textContent = 'Select and copy the text.'; }
+  });
+  $('again').addEventListener('click', () => {
+    $('final').classList.remove('on'); $('stamp').classList.remove('on'); $('reply').classList.remove('on'); $('promise').textContent = ''; $('note').textContent = '';
+    free = []; rings = []; flash = 0; typed = false; p = 0; stage = 'hold'; $('hint').classList.add('on');
+  });
+
+  resize(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

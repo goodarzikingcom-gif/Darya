@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bloom</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root { --rose: #ff7aa8; --petal: #ffb3cf; --ink: #ffd9e8; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 70px 16px 28px; text-align: center;
+    background: radial-gradient(circle at 50% 35%, #160a24 0, #05030a 70%);
+    font-family: 'Fredoka', system-ui, sans-serif; color: var(--ink);
+  }
+  h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(2.4rem, 6vw, 4rem); margin: 0; color: var(--rose); }
+  .group { margin: 0; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; opacity: .65; }
+  .tabs { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .tab {
+    font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); background: #1a0f26;
+    border: 3px solid #4a2a63; border-radius: 999px; padding: 6px 20px;
+  }
+  .tab[aria-pressed="true"] { background: var(--rose); border-color: var(--rose); color: #2a0a1a; }
+  .tab:focus-visible, .replay:focus-visible { outline: 3px solid var(--petal); outline-offset: 3px; }
+  .stage {
+    position: relative; width: min(94vw, 900px); aspect-ratio: 3 / 2; overflow: hidden;
+    border: 5px solid #3a2150; border-radius: 28px; background: #000; box-shadow: 0 0 60px rgba(190, 110, 255, .3);
+  }
+  canvas { width: 100%; height: 100%; display: block; touch-action: none; }
+  .line { min-height: 3.2em; max-width: 36ch; margin: 0; font-size: clamp(1.1rem, 2.6vw, 1.5rem); line-height: 1.4; transition: opacity .6s ease; }
+  .line.out { opacity: 0; }
+  .replay { font: inherit; font-weight: 600; cursor: pointer; color: #2a0a1a; background: var(--rose); border: 0; border-radius: 999px; padding: 8px 24px; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+  <a class="back" href="/" style="position:fixed;top:14px;left:16px;z-index:5;text-decoration:none;font-weight:600;color:#ffd9e8;background:#1a0f26;border:3px solid #4a2a63;border-radius:999px;padding:6px 16px">← Back</a>
+  <h1>Bloom</h1>
+  <p class="group">Flowers</p>
+  <div class="tabs" role="group" aria-label="Single flowers">
+    <button class="tab" aria-pressed="true">Lily</button>
+    <button class="tab" aria-pressed="false">Orchid</button>
+    <button class="tab" aria-pressed="false">Tulip</button>
+    <button class="tab" aria-pressed="false">Peony</button>
+  </div>
+  <p class="group">Bouquets</p>
+  <div class="tabs" role="group" aria-label="Bouquets">
+    <button class="tab" aria-pressed="false">Roses</button>
+    <button class="tab" aria-pressed="false">Spring</button>
+    <button class="tab" aria-pressed="false">Mixed</button>
+  </div>
+  <!-- The song keeps playing while you switch between flowers: only the picture changes -->
+  <div id="music"></div>
+  <div class="stage"><canvas id="c" width="900" height="600" aria-label="A flower or bouquet growing from glowing particles"></canvas></div>
+  <p class="line" id="line" aria-live="polite"></p>
+  <button class="replay" id="replay">↻ Grow again</button>
+
+  <!-- bloom.js must sit in the same folder as this page -->
+  <script src="bloom.js"></script>
+  <script>Bloom.mount(['lily','orchid','tulip','peony','roses','spring','mixed']);</script>
+</body>
+</html>
