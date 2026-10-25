@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root { --blush: #ffe4ee; --petal: #ffb3cf; --rose: #e8578f; --plum: #7a2a55; --cream: #fff8fb; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 28px; padding: 32px 20px;
+    background: radial-gradient(circle at 20% 10%, #fff 0, var(--blush) 45%, var(--petal) 100%);
+    font-family: 'Fredoka', system-ui, sans-serif; color: var(--plum);
+  }
+  header { text-align: center; }
+  h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(2.4rem, 5vw, 3.8rem); margin: 0; color: var(--rose); }
+  header p { margin: 8px 0 0; font-size: 1.1rem; }
+
+  .grid {
+    display: grid; gap: 28px; width: min(94vw, 1000px);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .card {
+    display: flex; flex-direction: column; text-decoration: none; color: inherit;
+    background: var(--cream); border: 6px solid var(--cream); border-radius: 28px; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(232, 87, 143, .3);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .card:hover, .card:focus-visible { transform: translateY(-6px) rotate(-.6deg); box-shadow: 0 16px 48px rgba(232, 87, 143, .45); }
+  .card:focus-visible { outline: 3px solid var(--plum); outline-offset: 4px; }
+  .art {
+    height: 190px; display: flex; align-items: center; justify-content: center;
+    font-size: 3.2rem; letter-spacing: .15em; border-radius: 20px 20px 0 0;
+  }
+  .art.chase { background: linear-gradient(180deg, #e6f9dd, #c9efc4); }
+  .art.maze  { background: linear-gradient(180deg, #e6f9dd, #bfe8ba); }
+  .art.rescue { background: linear-gradient(180deg, #ffe4ee, #ffc9dd); font-size: 2.6rem; }
+  .body { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .body h2 { margin: 0; font-size: 1.5rem; }
+  .body p { margin: 0; line-height: 1.45; flex: 1; }
+  .play {
+    align-self: flex-start; margin-top: 8px;
+    background: var(--rose); color: #fff; font-weight: 600; border-radius: 999px; padding: 8px 24px;
+  }
+  .soon { background: transparent; border: 4px dashed var(--petal); box-shadow: none; align-items: center; justify-content: center; text-align: center; min-height: 340px; gap: 6px; }
+  .soon:hover { transform: none; box-shadow: none; }
+  .soon .big { font-size: 3rem; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Game Room</h1>
+    <p>Pick a game and have fun!</p>
+  </header>
+
+  <main class="grid">
+    <a class="card" href="game.html">
+      <div class="art chase">🌷 🧑 💨 👩 🌸</div>
+      <div class="body">
+        <h2>Catch Me If You Can</h2>
+        <p>Run through the flower garden and catch Darya before she gets away. Every catch earns a kiss!</p>
+        <span class="play">Play</span>
+      </div>
+    </a>
+
+    <a class="card" href="maze.html">
+      <div class="art maze">🌹 🧑 🌿 👩 🌺</div>
+      <div class="body">
+        <h2>Maze of Roses</h2>
+        <p>Find your way through the rose hedges to Darya. Every level gets a little trickier.</p>
+        <span class="play">Play</span>
+      </div>
+    </a>
+
+    <a class="card" href="rescue.html">
+      <div class="art rescue">😍 👦 🧔 👩 🧑 ⚔️</div>
+      <div class="body">
+        <h2>Rescue Darya</h2>
+        <p>Everyone wants Darya, and they have taken her! Help Amin slash through all the suitors and bring her home.</p>
+        <span class="play">Play</span>
+      </div>
+    </a>
+
+    <div class="card soon">
+      <div class="big">🌷</div>
+      <h2>More games soon</h2>
+      <p>New surprises are growing…</p>
+    </div>
+  </main>
+</body>
+</html>
