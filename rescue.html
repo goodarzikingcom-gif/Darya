@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rescue Darya</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root { --blush: #ffe4ee; --petal: #ffb3cf; --rose: #e8578f; --plum: #7a2a55; --cream: #fff8fb; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 20px;
+    background: radial-gradient(circle at 20% 10%, #fff 0, var(--blush) 45%, var(--petal) 100%);
+    font-family: 'Fredoka', system-ui, sans-serif; color: var(--plum);
+  }
+  h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(2rem, 4vw, 3rem); margin: 0; color: var(--rose); }
+  p.sub { margin: 0; font-size: 1.05rem; text-align: center; }
+  #stage {
+    width: min(92vw, 960px); aspect-ratio: 16 / 9;
+    border: 6px solid var(--cream); border-radius: 28px;
+    box-shadow: 0 10px 40px rgba(232, 87, 143, .35);
+    background: #d9f5d3; touch-action: none; cursor: pointer;
+  }
+  .back { position: fixed; top: 14px; left: 16px; z-index: 5; text-decoration: none; font-weight: 600; color: var(--plum); background: var(--cream); border: 3px solid var(--petal); border-radius: 999px; padding: 6px 16px; }
+  .back:focus-visible { outline: 3px solid var(--plum); outline-offset: 3px; }
+</style>
+</head>
+<body>
+  <a class="back" href="games.html">← All games</a>
+  <h1>Rescue Darya</h1>
+  <p class="sub">Amin fights on his own. Take control with arrow keys or WASD, and slash with Space or a click. Enter skips the story.</p>
+  <canvas id="stage" width="960" height="540"></canvas>
+
+<script>
+(() => {
+  const cv = document.getElementById('stage');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+
+  // Real photos: put amin.jpg and darya.jpg next to this file (emoji is used if missing)
+  const loadImg = src => { const i = new Image(); i.ok = false; i.onload = () => { i.ok = true; }; i.src = src; return i; };
+  const photos = { amin: loadImg('amin3.jpg'), darya: loadImg('darya4.jpg') };
+
+  // ---------- Sound ----------
+  const clips = ['kiss.mp3', ...Array.from({ length: 8 }, (_, i) => `kiss${i + 1}.mp3`)].map(src => {
+    const a = new Audio(src); const c = { a, ok: false };
+    a.addEventListener('canplaythrough', () => { c.ok = true; });
+    a.preload = 'auto'; a.load(); return c;
+  });
+  let actx = null, lastClip = -1;
+  const audio = () => {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    actx = actx || new AC();
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  };
+  // Short synthesized blip: pitch sweep from f1 to f2
+  function tone(f1, f2, dur, type, vol) {
+    const ac = audio(); if (!ac) return;
+    const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function playKiss() {
+    const ready = clips.map((c, i) => i).filter(i => clips[i].ok);
+    if (ready.length) {
+      const pool = ready.length > 1 ? ready.filter(i => i !== lastClip) : ready;
+      lastClip = pool[Math.floor(Math.random() * pool.length)];
+      const a = clips[lastClip].a;
+      a.currentTime = 0; a.playbackRate = 0.92 + Math.random() * 0.18; a.volume = 0.8 + Math.random() * 0.2;
+      a.play().catch(() => {});
+      return;
+    }
+    tone(900 + Math.random() * 500, 180, 0.09, 'sine', 0.6);
+  }
+
+  // ---------- Game state ----------
+  const BOYS = 14;
+  const cage = { x: W - 110, y: 130 };            // where Darya is held
+  const emojis = ['👦', '🧔', '👨', '👱‍♂️', '🧑‍🦱', '👨‍🦰', '🤵', '🕺'];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const flowers = Array.from({ length: 45 }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    e: ['🌸', '🌷', '🌼', '🌺', '💐'][Math.floor(Math.random() * 5)], s: 20 + Math.random() * 20
+  }));
+  let state, t, boys, hearts, slashes, poofs, darya, amin, kissed, attackQ, shake, dust, kissAt;
+  const held = [false, false, false, false];       // up, right, down, left
+
+  function reset() {
+    state = 'intro'; t = 0; boys = []; hearts = []; slashes = []; poofs = []; kissed = false; kissAt = 0; attackQ = false; shake = 0;
+    darya = { x: W / 2, y: H / 2, r: 40 };
+    amin = { x: -60, y: H / 2, r: 34, hp: 5, inv: 0, cool: 0, step: 0, mv: 0, lean: 0, lunge: 0, lx: 0, ly: 0 };
+    dust = [];
+  }
+
+  function startSteal() {
+    state = 'steal'; t = 0;
+    boys = Array.from({ length: BOYS }, (_, i) => {
+      const side = Math.floor(Math.random() * 4);
+      const x = side === 1 ? W + 30 : side === 3 ? -30 : rnd(0, W);
+      const y = side === 0 ? -30 : side === 2 ? H + 30 : rnd(0, H);
+      return { x, y, a: i / BOYS * Math.PI * 2, e: emojis[i % emojis.length], r: 26, tx: 0, ty: 0, timer: 0, chase: false, vx: 0, vy: 0 };
+    });
+  }
+  function scatterTarget(b) {
+    do { b.tx = rnd(240, W - 60); b.ty = rnd(60, H - 60); } while (Math.hypot(b.tx - cage.x, b.ty - cage.y) < 170);
+  }
+  function toFight() {
+    boys.forEach(b => { scatterTarget(b); b.x = b.tx; b.y = b.ty; });
+    darya.x = cage.x; darya.y = cage.y;
+    amin.x = 150; amin.y = H / 2; amin.hp = 5; amin.inv = 0;
+    state = 'fight'; t = 0;
+  }
+
+  const moveToward = (o, tx, ty, sp) => {
+    const dx = tx - o.x, dy = ty - o.y, d = Math.hypot(dx, dy);
+    if (d <= sp) { o.x = tx; o.y = ty; } else { o.x += dx / d * sp; o.y += dy / d * sp; }
+  };
+  const burst = (x, y, n) => {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3.5;
+      hearts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1.5, life: 80, e: Math.random() < .5 ? '💗' : '💖' });
+    }
+  };
+
+  // ---------- Input (layout-independent) ----------
+  const KEYDIR = { ArrowUp: 0, KeyW: 0, ArrowRight: 1, KeyD: 1, ArrowDown: 2, KeyS: 2, ArrowLeft: 3, KeyA: 3 };
+  function advance() {
+    audio();
+    if (state === 'intro' && t > 100) startSteal();
+    else if (state === 'steal' && t > 40) toFight();
+    else if (state === 'lose') { reset(); startSteal(); toFight(); }
+    else if (state === 'win' && kissed && t - kissAt > 200) reset();
+  }
+  addEventListener('keydown', e => {
+    if (e.code in KEYDIR) { held[KEYDIR[e.code]] = true; e.preventDefault(); }
+    else if (e.code === 'Space') { e.preventDefault(); if (state === 'fight') attackQ = true; }
+    else if (e.code === 'Enter') { advance(); }
+  });
+  addEventListener('keyup', e => { if (e.code in KEYDIR) held[KEYDIR[e.code]] = false; });
+  addEventListener('blur', () => held.fill(false));
+  cv.addEventListener('pointerdown', () => { window.focus(); if (state === 'fight') attackQ = true; else advance(); });
+
+  // ---------- Update ----------
+  function update() {
+    t++;
+    if (shake > 0) shake--;
+
+    if (state === 'steal') {
+      // Ring center: Darya's spot, then carried to the cage corner
+      let c = { x: W / 2, y: H / 2 };
+      if (t >= 150) {
+        const k = Math.min(1, (t - 150) / 120), e = k * k * (3 - 2 * k);
+        c = { x: W / 2 + (cage.x - W / 2) * e, y: H / 2 + (cage.y - H / 2) * e };
+      }
+      darya.x = c.x; darya.y = c.y;
+      if (t < 270) boys.forEach(b => moveToward(b, c.x + Math.cos(b.a) * 100, c.y + Math.sin(b.a) * 100, 6));
+      if (t === 270) boys.forEach(scatterTarget);
+      if (t >= 270) boys.forEach(b => moveToward(b, b.tx, b.ty, 4));
+      if (t >= 330 && t < 420) { amin.x = -60 + 210 * Math.min(1, (t - 330) / 90); amin.step += 4; amin.mv = 4; amin.lean = 2; }
+      if (t >= 420) toFight();
+    }
+
+    if (state === 'fight') {
+      // Amin: keys take manual control, otherwise he hunts the nearest suitor on his own
+      let dx = (held[1] ? 1 : 0) - (held[3] ? 1 : 0), dy = (held[2] ? 1 : 0) - (held[0] ? 1 : 0);
+      const manual = dx !== 0 || dy !== 0;
+      let target = null, best = 1e9;
+      boys.forEach(b => { const d = Math.hypot(b.x - amin.x, b.y - amin.y); if (d < best) { best = d; target = b; } });
+      let sp = 4.4;
+      if (!manual && target) {
+        dx = target.x - amin.x; dy = target.y - amin.y; sp = 3.8;
+        if (best < 75 && amin.cool <= 0) attackQ = true;   // auto slash when in reach
+        if (best < 55) sp = 0;                              // stand and fight
+      }
+      const m = Math.hypot(dx, dy) || 1;
+      let mvx = dx / m * sp * ((dx || dy) ? 1 : 0), mvy = dy / m * sp * ((dx || dy) ? 1 : 0);
+      if (amin.lunge > 0) { mvx += amin.lx; mvy += amin.ly; amin.lunge--; }   // quick dash on each slash
+      amin.x = Math.max(amin.r, Math.min(W - amin.r, amin.x + mvx));
+      amin.y = Math.max(amin.r, Math.min(H - amin.r, amin.y + mvy));
+      amin.mv = Math.hypot(mvx, mvy); amin.lean = mvx; amin.step += amin.mv;
+      if (amin.mv > 1.5 && t % 5 === 0) dust.push({ x: amin.x - mvx * 2, y: amin.y + amin.r * 0.85, life: 22 });
+      if (amin.inv > 0) amin.inv--;
+      if (amin.cool > 0) amin.cool--;
+
+      // Slash: defeats every suitor within reach
+      if (attackQ && amin.cool <= 0) {
+        amin.cool = 24; slashes.push({ x: amin.x, y: amin.y, life: 14 });
+        if (target) { const d = best || 1; amin.lx = (target.x - amin.x) / d * 9; amin.ly = (target.y - amin.y) / d * 9; amin.lunge = 5; }
+        tone(700, 200, 0.12, 'sawtooth', 0.15);
+        const left = [];
+        boys.forEach(b => {
+          if (Math.hypot(b.x - amin.x, b.y - amin.y) < 82) { poofs.push({ x: b.x, y: b.y, life: 34 }); tone(500, 120, 0.1, 'triangle', 0.3); shake = 6; }
+          else left.push(b);
+        });
+        boys = left;
+      }
+      attackQ = false;
+
+      // Suitors wander and sometimes rush Amin
+      boys.forEach(b => {
+        if (--b.timer <= 0) { b.timer = 60 + Math.random() * 60; b.chase = Math.random() < 0.3; const a = Math.random() * 6.28; b.vx = Math.cos(a); b.vy = Math.sin(a); }
+        if (b.chase) { const d = Math.hypot(amin.x - b.x, amin.y - b.y) || 1; b.x += (amin.x - b.x) / d * 1.9; b.y += (amin.y - b.y) / d * 1.9; }
+        else { b.x += b.vx * 1.4; b.y += b.vy * 1.4; }
+        b.x = Math.max(b.r, Math.min(W - b.r, b.x)); b.y = Math.max(b.r, Math.min(H - b.r, b.y));
+        // Stay clear of Darya
+        const cd = Math.hypot(b.x - cage.x, b.y - cage.y);
+        if (cd < 110) { b.x += (b.x - cage.x) / cd * 3; b.y += (b.y - cage.y) / cd * 3; }
+        // Touching Amin costs a heart
+        if (amin.inv <= 0 && Math.hypot(b.x - amin.x, b.y - amin.y) < b.r + amin.r - 8) {
+          amin.hp--; amin.inv = 70; shake = 10; tone(300, 90, 0.2, 'square', 0.2);
+          if (amin.hp <= 0) state = 'lose';
+        }
+      });
+      if (state === 'fight' && boys.length === 0) { state = 'win'; t = 0; }
+    }
+
+    if (state === 'win') {
+      moveToward(darya, amin.x + 70, amin.y, 5);
+      if (!kissed && darya.x === amin.x + 70 && darya.y === amin.y) { kissed = true; kissAt = t; playKiss(); burst((amin.x + darya.x) / 2, amin.y - 20, 30); }
+    }
+
+    hearts.forEach(h => { h.x += h.vx; h.y += h.vy; h.vy += 0.05; h.life--; });
+    hearts = hearts.filter(h => h.life > 0);
+    slashes.forEach(s => s.life--); slashes = slashes.filter(s => s.life > 0);
+    poofs.forEach(p => p.life--); poofs = poofs.filter(p => p.life > 0);
+    dust.forEach(d => d.life--); dust = dust.filter(d => d.life > 0);
+  }
+
+  // ---------- Drawing ----------
+  function portrait(x, y, r, img, emoji, tilt, bob) {
+    tilt = tilt || 0; bob = bob || 0;
+    ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(x, y + r * 0.95, r * 0.8, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.save(); ctx.translate(x, y + bob); ctx.rotate(tilt);
+    if (img.ok) {
+      const s = Math.min(img.naturalWidth, img.naturalHeight);
+      ctx.save(); ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, -r, -r, r * 2, r * 2);
+      ctx.restore();
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.lineWidth = 5; ctx.strokeStyle = '#ffb3cf'; ctx.stroke();
+    } else { ctx.font = (r * 1.5) + 'px serif'; ctx.fillStyle = '#000'; ctx.fillText(emoji, 0, 0); }
+    ctx.restore();
+  }
+  function caption(text) {
+    ctx.fillStyle = 'rgba(255, 248, 251, .92)'; ctx.fillRect(W / 2 - 330, H - 82, 660, 56);
+    ctx.font = '600 26px Fredoka, sans-serif'; ctx.fillStyle = '#7a2a55'; ctx.fillText(text, W / 2, H - 54);
+  }
+  function bubble(x, y, text) {
+    ctx.font = '600 18px Fredoka, sans-serif';
+    const w = ctx.measureText(text).width + 26;
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#ffb3cf'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.rect(x - w / 2, y - 18, w, 36); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#7a2a55'; ctx.fillText(text, x, y);
+  }
+  function title(text, y, size, alpha) {
+    ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+    ctx.font = size + 'px Pacifico, cursive'; ctx.fillStyle = '#e8578f'; ctx.fillText(text, W / 2, y);
+    ctx.globalAlpha = 1;
+  }
+  function scene() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#e6f9dd'); g.addColorStop(1, '#c9efc4');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    flowers.forEach(f => { ctx.font = f.s + 'px serif'; ctx.fillText(f.e, f.x, f.y); });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if (shake > 0) ctx.translate(rnd(-4, 4), rnd(-4, 4));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    scene();
+
+    if (state === 'intro') {
+      const py = 175, pulse = 1 + Math.sin(t * 0.06) * 0.03;
+      portrait(W / 2, py, 90 * pulse, photos.darya, '👩');
+      for (let i = 0; i < 8; i++) { const a = t * 0.02 + i * Math.PI / 4; ctx.font = '30px serif'; ctx.fillText('✨', W / 2 + Math.cos(a) * 150, py + Math.sin(a) * 150); }
+      for (let i = 0; i < 4; i++) {
+        const k = (t * 0.8 + i * 50) % 200;
+        ctx.globalAlpha = Math.max(0, 1 - k / 200); ctx.font = '30px serif';
+        ctx.fillText('🎵', W / 2 + (i - 1.5) * 140 + Math.sin(t * 0.05 + i) * 18, py + 60 - k); ctx.globalAlpha = 1;
+      }
+      title('Meet Darya', 345, 56, (t - 20) / 30);
+      ctx.globalAlpha = Math.max(0, Math.min(1, (t - 90) / 30));
+      ctx.font = '600 28px Fredoka, sans-serif'; ctx.fillStyle = '#7a2a55';
+      ctx.fillText('The most beautiful girl in the world', W / 2, 410);
+      ctx.globalAlpha = Math.max(0, Math.min(1, (t - 170) / 30));
+      ctx.fillText('with the sweetest voice ever 🎵', W / 2, 452);
+      ctx.globalAlpha = 1;
+      if (t > 260 && Math.floor(t / 30) % 2 === 0) { ctx.font = '600 20px Fredoka, sans-serif'; ctx.fillText('Press Enter or click to start', W / 2, 505); }
+    } else {
+      // Darya (free in the story, held in the corner during the fight)
+      const captive = state === 'fight' || (state === 'steal' && t >= 150);
+      portrait(darya.x, darya.y, darya.r, photos.darya, '👩');
+      if (captive && state !== 'win') { ctx.font = '28px serif'; ctx.fillText('😢', darya.x + 34, darya.y - 34); bubble(darya.x, darya.y - 80, state === 'fight' ? 'Help me, Amin!' : 'Let me go!'); }
+
+      boys.forEach(b => { ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath(); ctx.ellipse(b.x, b.y + 24, 18, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.font = '48px serif'; ctx.fillStyle = '#000'; ctx.fillText(b.e, b.x, b.y + Math.sin(t * 0.25 + b.a * 5) * 4); if (state === 'steal') { ctx.font = '22px serif'; ctx.fillText('😍', b.x, b.y - 34); } });
+
+      dust.forEach(d => { ctx.globalAlpha = d.life / 22 * 0.6; ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(d.x, d.y, 5 + (22 - d.life) * 0.4, 0, Math.PI * 2); ctx.fill(); });
+      ctx.globalAlpha = 1;
+      if (amin.x > -40) {
+        if (!(amin.inv > 0 && Math.floor(amin.inv / 5) % 2)) {
+          const ph = amin.step * 0.22, moving = amin.mv > 1;
+          const bob = moving ? -Math.abs(Math.sin(ph)) * 8 : Math.sin(t * 0.08) * 2;
+          const tilt = moving ? Math.sin(ph) * 0.07 + Math.max(-0.2, Math.min(0.2, amin.lean * 0.03)) : 0;
+          portrait(amin.x, amin.y, amin.r, photos.amin, '🧑', tilt, bob);
+        }
+      }
+      slashes.forEach(s => {
+        const k = 1 - s.life / 14;
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (1 - k) + ')'; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(s.x, s.y, 40 + k * 75, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(232, 87, 143, ' + (1 - k) + ')'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(s.x, s.y, 36 + k * 75, 0, Math.PI * 2); ctx.stroke();
+      });
+      poofs.forEach(p => { const k = 1 - p.life / 34; ctx.globalAlpha = 1 - k; ctx.font = (40 + k * 30) + 'px serif'; ctx.fillText('💫', p.x, p.y - k * 40); ctx.fillText('⭐', p.x + 24, p.y + 10 - k * 30); ctx.globalAlpha = 1; });
+
+      // Story captions
+      if (state === 'steal') {
+        if (t < 150) caption('Everyone wants Darya for themselves!');
+        else if (t < 270) caption('They are carrying her away!');
+        else if (t < 330) caption('Where is Amin?!');
+        else caption('Amin is here!');
+      }
+      // HUD
+      if (state === 'fight') {
+        ctx.font = '30px serif'; ctx.textAlign = 'left';
+        for (let i = 0; i < 5; i++) { ctx.globalAlpha = i < amin.hp ? 1 : 0.25; ctx.fillText('❤️', 24 + i * 40, 36); }
+        ctx.globalAlpha = 1; ctx.textAlign = 'center';
+        ctx.font = '600 22px Fredoka, sans-serif'; ctx.fillStyle = '#7a2a55'; ctx.fillText('Suitors left: ' + boys.length, W / 2, 34);
+        if (t < 300) caption('Amin hunts them down! Steer with the keys.');
+      }
+      if (state === 'win') {
+        if (kissed) {
+          const k = t - kissAt;
+          title('Darya is safe!', 70, 60, 1);
+          // Closing love note, fading in line by line
+          ctx.fillStyle = 'rgba(255, 248, 251, .93)'; ctx.fillRect(W / 2 - 400, H - 200, 800, 160);
+          title('Darya is mine, and I am hers.', H - 160, 38, (k - 40) / 40);
+          ctx.globalAlpha = Math.max(0, Math.min(1, (k - 100) / 40));
+          ctx.font = '600 24px Fredoka, sans-serif'; ctx.fillStyle = '#7a2a55';
+          ctx.fillText('Her hand is for me to hold, and her kisses are only for me.', W / 2, H - 105);
+          ctx.globalAlpha = Math.max(0, Math.min(1, (k - 160) / 40));
+          ctx.fillText('Forever. 💗', W / 2, H - 70);
+          ctx.globalAlpha = 1;
+          if (k > 230 && Math.floor(t / 30) % 2 === 0) { ctx.font = '600 18px Fredoka, sans-serif'; ctx.fillStyle = '#7a2a55'; ctx.fillText('Press Enter or click to play again', W / 2, H - 18); }
+        }
+      }
+      if (state === 'lose') {
+        ctx.fillStyle = 'rgba(255, 248, 251, .85)'; ctx.fillRect(0, 0, W, H);
+        title('Oh no!', 220, 64, 1); ctx.font = '600 22px Fredoka, sans-serif'; ctx.fillStyle = '#7a2a55';
+        ctx.fillText('The suitors got too close. Press Enter or click to try again', W / 2, 300);
+      }
+      hearts.forEach(h => { ctx.globalAlpha = Math.min(1, h.life / 30); ctx.font = '28px serif'; ctx.fillText(h.e, h.x, h.y); });
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+  }
+
+  reset();
+  window.focus();
+  (function loop() { update(); draw(); requestAnimationFrame(loop); })();
+
+})();
+</script>
+</body>
+</html>
