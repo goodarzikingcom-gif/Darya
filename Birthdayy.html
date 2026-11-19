@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Birthday, My Darya 🌊💖</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    /* تم روشن، زلال و خورشیدی اقیانوس */
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #bbf2f6 0%, #7ee0ea 35%, #38bdf8 70%, #0284c7 100%);
+      color: #0c4a6e;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* انعکاس درخشش نور خورشید روی آب */
+    .sunlight-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.45) 0%, transparent 65%);
+      z-index: 1;
+    }
+
+    /* هدر رمانتیک و پرانرژی */
+    header {
+      text-align: center;
+      padding-top: 35px;
+      z-index: 10;
+      padding-inline: 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      color: #0369a1;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.15);
+    }
+
+    h1 {
+      font-size: clamp(28px, 6vw, 50px);
+      font-weight: 900;
+      color: #075985;
+      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.7);
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 14px;
+      color: #0c4a6e;
+      max-width: 460px;
+      margin: 0 auto;
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    /* صحنه مرکزی کیک و بطری‌ها */
+    .stage {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      min-height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-block: 20px;
+      z-index: 10;
+    }
+
+    /* طراحی شیک و روشن بطری‌های روی آب */
+    .bottle-item {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      padding: 10px 16px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: transform 0.25s, box-shadow 0.25s;
+      box-shadow: 0 8px 24px rgba(3, 105, 161, 0.15);
+      z-index: 12;
+    }
+
+    .bottle-item:hover {
+      transform: scale(1.15) translateY(-4px) !important;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 12px 30px rgba(3, 105, 161, 0.25);
+    }
+
+    .bottle-icon {
+      font-size: 30px;
+      user-select: none;
+    }
+
+    .bottle-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: #0284c7;
+      letter-spacing: 0.5px;
+    }
+
+    /* موقعیت ۶ بطری معلق در آب */
+    .b-1 { top: 10px; left: 20px; animation: floatWave 4.8s ease-in-out infinite; }
+    .b-2 { top: 10px; right: 20px; animation: floatWave 5.2s ease-in-out infinite 0.6s; }
+    .b-3 { top: 45%; left: 10px; animation: floatWave 4.4s ease-in-out infinite 1.2s; }
+    .b-4 { top: 45%; right: 10px; animation: floatWave 5s ease-in-out infinite 1.8s; }
+    .b-5 { bottom: 15px; left: 40px; animation: floatWave 4.6s ease-in-out infinite 0.9s; }
+    .b-6 { bottom: 15px; right: 40px; animation: floatWave 5.4s ease-in-out infinite 1.5s; }
+
+    @keyframes floatWave {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(2deg); }
+    }
+    /* کیک تولد خوش‌رنگ و زنده */
+    .cake-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      z-index: 15;
+      transform: scale(1.05);
+      transition: transform 0.25s;
+    }
+    .cake-wrapper:hover {
+      transform: scale(1.1);
+    }
+
+    /* شمع و شعله */
+    .candle {
+      width: 12px;
+      height: 42px;
+      background: repeating-linear-gradient(45deg, #f43f5e, #f43f5e 6px, #ffffff 6px, #ffffff 12px);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .flame {
+      position: absolute;
+      top: -26px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 25px;
+      background: radial-gradient(ellipse at bottom, #fff 15%, #fde047 40%, #f97316 85%);
+      border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+      box-shadow: 0 0 20px #fde047, 0 0 35px #fb923c;
+      animation: flameMotion 0.8s infinite alternate ease-in-out;
+    }
+
+    @keyframes flameMotion {
+      0% { transform: translateX(-50%) scale(1) rotate(-2deg); }
+      100% { transform: translateX(-50%) scale(1.15) rotate(2deg); }
+    }
+
+    /* طبقات کیک */
+    .cake-top {
+      width: 100px;
+      height: 48px;
+      background: linear-gradient(to right, #fecdd3, #fda4af);
+      border-radius: 14px 14px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      box-shadow: inset 0 -4px 0 rgba(0,0,0,0.06);
+    }
+
+    .cake-bottom {
+      width: 175px;
+      height: 65px;
+      background: linear-gradient(to right, #fb7185, #f43f5e);
+      border-radius: 18px;
+      margin-top: -6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      letter-spacing: 3px;
+      font-size: 13px;
+      color: #ffffff;
+      box-shadow: 0 12px 28px rgba(244, 63, 94, 0.35);
+      border-bottom: 5px solid #e11d48;
+    }
+
+    .plate {
+      width: 230px;
+      height: 10px;
+      background: #ffffff;
+      border-radius: 999px;
+      margin-top: -3px;
+      box-shadow: 0 10px 25px rgba(2, 132, 199, 0.2);
+    }
+
+    .cake-hint {
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #0369a1;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      padding: 7px 18px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.15);
+      animation: pulseBounce 2s infinite;
+    }
+
+    @keyframes pulseBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    /* پلیر موسیقی شناور */
+    .audio-player {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 100;
+    }
+
+    .music-btn {
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      color: #0369a1;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.15);
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .music-btn:hover {
+      background: #ffffff;
+      transform: scale(1.05);
+    }
+
+    /* مودال نامه رمانتیک */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 74, 110, 0.5);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 99999;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      border: 2px solid #bae6fd;
+      max-width: 500px;
+      width: 100%;
+      border-radius: 28px;
+      padding: 28px 32px;
+      box-shadow: 0 20px 50px rgba(2, 132, 199, 0.3);
+      position: relative;
+      animation: popModal 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    @keyframes popModal {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: #f1f5f9;
+      border: none;
+      color: #475569;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+    .modal-close:hover {
+      background: #e2e8f0;
+    }
+
+    .modal-tag {
+      font-size: 12px;
+      color: #0284c7;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 900;
+      color: #0f172a;
+      margin-bottom: 14px;
+    }
+
+    .modal-text {
+      font-size: 15px;
+      line-height: 1.75;
+      color: #334155;
+      margin-bottom: 22px;
+      font-weight: 400;
+    }
+
+    .modal-footer {
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    /* امواج روشن و زلال دریا در پایین */
+    .waves {
+      position: relative;
+      width: 100%;
+      height: 12vh;
+      min-height: 90px;
+      max-height: 140px;
+      margin-bottom: -7px;
+      pointer-events: none;
+    }
+
+    .parallax > use {
+      animation: moveForever 25s cubic-bezier(.55,.5,.45,.5) infinite;
+    }
+    .parallax > use:nth-child(1) {
+      animation-delay: -2s;
+      animation-duration: 7s;
+    }
+    .parallax > use:nth-child(2) {
+      animation-delay: -3s;
+      animation-duration: 10s;
+    }
+    .parallax > use:nth-child(3) {
+      animation-delay: -4s;
+      animation-duration: 13s;
+    }
+    .parallax > use:nth-child(4) {
+      animation-delay: -5s;
+      animation-duration: 20s;
+    }
+
+    @keyframes moveForever {
+      0% { transform: translate3d(-90px,0,0); }
+      100% { transform: translate3d(85px,0,0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sunlight-overlay"></div>
+
+  <!-- موزیک پلیر -->
+  <div class="audio-player">
+    <audio id="audio" loop>
+      <source src="turk.mp3" type="audio/mpeg">
+    </audio>
+    <button class="music-btn" onclick="toggleMusic()">
+      <span id="music-icon">🎵</span>
+      <span id="music-text">Play Music</span>
+    </button>
+  </div>
+
+  <!-- هدر -->
+  <header>
+    <span class="badge">A Pure Celebration by the Sea</span>
+    <h1>Happy Birthday, My Darya 🌊💖</h1>
+    <p>Blow out your birthday candle in the center, and open each floating bottle to unveil how deeply you are loved...</p>
+  </header>
+
+  <!-- صحنه کیک و بطری‌ها -->
+  <div class="stage">
+
+    <div class="bottle-item b-1" onclick="showLetter(0)">
+      <span class="bottle-icon">🍾</span>
+      <span class="bottle-title">Letter 1 💌</span>
+    </div>
+
+    <div class="bottle-item b-2" onclick="showLetter(1)">
+      <span class="bottle-icon">🍾</span>
+      <span class="bottle-title">Letter 2 💌</span>
+    </div>
+
+    <div class="bottle-item b-3" onclick="showLetter(2)">
+      <span class="bottle-icon">🍾</span>
+      <span class="bottle-title">Letter 3 💌</span>
+    </div>
+
+    <div class="bottle-item b-4" onclick="showLetter(3)">
+      <span class="bottle-icon">🍾</span>
+      <span class="bottle-title">Letter 4 💌</span>
+    </div>
+
+    <div class="bottle-item b-5" onclick="showLetter(4)">
+      <span class="bottle-icon">🍾</span>
+      <span class="bottle-title">Letter 5 💌</span>
+    </div>
+
+    <div class="bottle-item b-6" onclick="showLetter(5)">
+      <span class="bottle-icon">🍾</span>
+      <span class="bottle-title">Letter 6 💌</span>
+    </div>
+
+    <!-- کیک تولد -->
+    <div class="cake-wrapper" onclick="blowCandle()">
+      <div class="candle">
+        <div id="flame" class="flame"></div>
+      </div>
+      <div class="cake-top">🍓 🤍 🍓</div>
+      <div class="cake-bottom">DARYA</div>
+      <div class="plate"></div>
+      <div id="cake-hint" class="cake-hint">Tap candle to blow it out! 🎂✨</div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- پنجره مودال نامه‌ها (که بدون این نامه‌ها باز نمی‌شن) -->
+  <div id="letterModal" class="modal-overlay" onclick="handleBackdropClick(event)">
+    <div class="modal-box">
+      <button class="modal-close" onclick="hideLetter()">✕</button>
+      <div id="modalTag" class="modal-tag">Bottle 1 of 6 💌</div>
+      <div id="modalTitle" class="modal-title">Letter Title</div>
+      <div id="modalText" class="modal-text">Letter Body</div>
+      <div class="modal-footer">
+        <span>Forever & always yours, Darya 🌊</span>
+        <span style="color: #f43f5e;">With all my love 💖</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- امواج ملایم پایین صفحه -->
+  <svg class="waves" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto">
+    <defs>
+      <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
+    </defs>
+    <g class="parallax">
+      <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.7)" />
+      <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.5)" />
+      <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.3)" />
+      <use xlink:href="#gentle-wave" x="48" y="7" fill="#ffffff" />
+    </g>
+  </svg>
+
+  <script>
+    const lettersData = [
+      {
+        tag: "Bottle 1 of 6 💌",
+        title: "Why You Are Named Darya",
+        text: "Just like the turquoise sea under the warm morning sun, your spirit is limitless, refreshing, and filled with tranquility. The day you came into my life, everything turned bright and alive."
+      },
+      {
+        tag: "Bottle 2 of 6 💌",
+        title: "Your Radiant Smile",
+        text: "Your laugh is brighter than sunlight sparkling on ocean waves. Whenever you smile, every worry in my world melts away. Never stop smiling, my beautiful girl."
+      },
+      {
+        tag: "Bottle 3 of 6 💌",
+        title: "My Safe Shoreline",
+        text: "No matter how turbulent the world gets, standing beside you brings absolute calm to my heart. You are my haven, my gentle breeze, and my favorite place to be."
+      },
+      {
+        tag: "Bottle 4 of 6 💌",
+        title: "My Birthday Wish for You",
+        text: "Today as you blow out your candle, I pray that sunshine, joy, and peace accompany every step of your life. May your dreams soar as high and vast as the ocean horizon."
+      },
+      {
+        tag: "Bottle 5 of 6 💌",
+        title: "Our Endless Adventure",
+        text: "Every chapter written with you is pure magic. As long as I'm walking this path with your hand in mine, life feels like a constant, breathtaking holiday by the sea."
+      },
+      {
+        tag: "Bottle 6 of 6 💌",
+        title: "Always and Forever",
+        text: "This may be the sixth bottle, but my affection for you is as deep and infinite as every ocean on earth combined. Happy Birthday, my shining light. I love you endlessly, Darya."
+      }
+    ];
+
+    function showLetter(index) {
+      const modal = document.getElementById('letterModal');
+      const item = lettersData[index];
+      if (!modal || !item) return;
+
+      document.getElementById('modalTag').innerText = item.tag;
+      document.getElementById('modalTitle').innerText = item.title;
+      document.getElementById('modalText').innerText = item.text;
+
+      modal.style.display = 'flex';
+
+      try {
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 35,
+            spread: 50,
+            origin: { y: 0.6 },
+            colors: ['#38bdf8', '#fb7185', '#fde047', '#ffffff']
+          });
+        }
+      } catch (e) {}
+    }
+
+    function hideLetter() {
+      const modal = document.getElementById('letterModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function handleBackdropClick(e) {
+      const modal = document.getElementById('letterModal');
+      if (e.target === modal) {
+        hideLetter();
+      }
+    }
+    let isBlown = false;
+    function blowCandle() {
+      const flame = document.getElementById('flame');
+      const hint = document.getElementById('cake-hint');
+
+      if (!isBlown) {
+        if (flame) flame.style.display = 'none';
+        if (hint) {
+          hint.innerHTML = '✨ Wish Made! Happy Birthday, Darya! 💖🎉';
+          hint.style.background = '#ffffff';
+          hint.style.color = '#0284c7';
+        }
+        isBlown = true;
+
+        try {
+          if (typeof confetti === 'function') {
+            confetti({
+              particleCount: 90,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#0284c7', '#38bdf8', '#f43f5e', '#fde047', '#ffffff']
+            });
+          }
+        } catch (e) {}
+      } else {
+        if (flame) flame.style.display = 'block';
+        if (hint) {
+          hint.innerHTML = 'Tap candle to blow it out! 🎂✨';
+          hint.style.background = 'rgba(255, 255, 255, 0.8)';
+          hint.style.color = '#0369a1';
+        }
+        isBlown = false;
+      }
+    }
+
+    const audio = document.getElementById('audio');
+    const musicIcon = document.getElementById('music-icon');
+    const musicText = document.getElementById('music-text');
+    let playing = false;
+
+    function toggleMusic() {
+      if (!audio) return;
+      if (!playing) {
+        audio.play().then(() => {
+          playing = true;
+          if (musicIcon) musicIcon.innerText = '⏸️';
+          if (musicText) musicText.innerText = 'Pause';
+        }).catch(() => {
+          alert('Put your MP3 audio file named "song.mp3" in the same folder!');
+        });
+      } else {
+        audio.pause();
+        playing = false;
+        if (musicIcon) musicIcon.innerText = '🎵';
+        if (musicText) musicText.innerText = 'Play Music';
+      }
+    }
+  </script>
+</body>
+</html>

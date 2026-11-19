@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Happy Birthday</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root { --rose: #ff7aa8; --ink: #ffe3ef; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #02040f; color: var(--ink); font-family: 'Fredoka', system-ui, sans-serif; }
+  canvas { position: fixed; inset: 0; display: block; touch-action: none; }
+  .layer { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 24px; pointer-events: none; }
+  .layer > * { pointer-events: auto; }
+  #intro { background: radial-gradient(circle at 50% 40%, #0b1850 0, #02040f 75%); transition: opacity .8s ease; }
+  #intro.gone { opacity: 0; pointer-events: none; } #intro.gone > * { pointer-events: none; }
+  h1 { font-family: 'Pacifico', cursive; font-weight: 400; font-size: clamp(2rem, 8vw, 3.4rem); margin: 0; color: var(--rose); }
+  p { margin: 0; font-size: 1.1rem; max-width: 30ch; line-height: 1.4; }
+  .btn { font: inherit; font-weight: 600; font-size: 1.15rem; cursor: pointer; color: #2a0a1a; background: var(--rose); border: 0; border-radius: 999px; padding: 12px 34px; }
+  .btn.ghost { color: var(--ink); background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.25); font-size: 1rem; padding: 8px 20px; }
+  .btn:focus-visible { outline: 3px solid #ffb3cf; outline-offset: 3px; }
+  #hint { position: fixed; left: 0; right: 0; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); text-align: center; font-weight: 600; font-size: 1.1rem; opacity: 0; transition: opacity .6s; pointer-events: none; text-shadow: 0 0 12px #000; }
+  #hint.on { opacity: 1; }
+  #skip { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); opacity: 0; pointer-events: none; transition: opacity .5s; }
+  #skip.on { opacity: .85; pointer-events: auto; }
+  #final { opacity: 0; transition: opacity 1.6s ease; background: radial-gradient(circle, rgba(2,4,15,.55) 0, rgba(2,4,15,.15) 70%); }
+  #final.on { opacity: 1; }
+  #final:not(.on) > * { pointer-events: none; }
+  #final h1 { font-size: clamp(2.2rem, 9vw, 4.2rem); text-shadow: 0 0 24px rgba(255,122,168,.6); }
+  #final p { font-size: 1.15rem; max-width: 26ch; }
+  #final .btn { margin-top: 8px; }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Fireworks, then a birthday cake made of the words I love you in many languages"></canvas>
+
+<div class="layer" id="intro">
+  <h1>A tiny surprise for Darya</h1>
+  <p>Turn the sound on, then tap to begin.</p>
+  <button class="btn" id="begin">Tap to begin ✨</button>
+  <button class="btn ghost" id="songbtn">🎵 Add a song</button>
+  <input type="file" id="song" accept="audio/*" hidden>
+</div>
+
+<div id="hint"></div>
+<button class="btn ghost" id="skip">Skip ▶▶</button>
+
+<div class="layer" id="final">
+  <h1>Happy Birthday, Darya</h1>
+  <p>Twenty candles, and I love you in every language I could find. Still, it is not enough.</p>
+  <button class="btn ghost" id="replay">↻ Again</button>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const rnd = (a, b) => a + Math.random() * (b - a), clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+  const ease = k => k * k * (3 - 2 * k);
+
+  // "I love you" in many languages: [language, text]
+  const LANGS = [
+    ['English', 'I love you'], ['Persian', 'دوستت دارم'], ['Arabic', 'أحبك'], ['Turkish', 'Seni seviyorum'], ['Kurdish', 'Ez te hez dikim'],
+    ['Azerbaijani', 'Mən səni sevirəm'], ['Hebrew', 'אני אוהב אותך'], ['French', "Je t'aime"], ['Spanish', 'Te quiero'], ['Portuguese', 'Eu te amo'],
+    ['Italian', 'Ti amo'], ['German', 'Ich liebe dich'], ['Dutch', 'Ik hou van je'], ['Swedish', 'Jag älskar dig'], ['Norwegian', 'Jeg elsker deg'],
+    ['Danish', 'Jeg elsker dig'], ['Finnish', 'Rakastan sinua'], ['Icelandic', 'Ég elska þig'], ['Russian', 'Я тебя люблю'], ['Ukrainian', 'Я тебе кохаю'],
+    ['Polish', 'Kocham cię'], ['Czech', 'Miluji tě'], ['Slovak', 'Ľúbim ťa'], ['Hungarian', 'Szeretlek'], ['Romanian', 'Te iubesc'],
+    ['Bulgarian', 'Обичам те'], ['Serbian', 'Волим те'], ['Croatian', 'Volim te'], ['Slovenian', 'Ljubim te'], ['Greek', "Σ' αγαπώ"],
+    ['Albanian', 'Të dua'], ['Armenian', 'Ես քեզ սիրում եմ'], ['Georgian', 'მე შენ მიყვარხარ'], ['Latvian', 'Es tevi mīlu'], ['Lithuanian', 'Aš tave myliu'],
+    ['Estonian', 'Ma armastan sind'], ['Irish', 'Tá grá agam duit'], ['Welsh', "Rwy'n dy garu di"], ['Basque', 'Maite zaitut'], ['Catalan', "T'estimo"],
+    ['Maltese', 'Inħobbok'], ['Luxembourgish', 'Ech hunn dech gär'], ['Latin', 'Te amo'], ['Esperanto', 'Mi amas vin'], ['Yiddish', 'איך האב דיך ליב'],
+    ['Hindi', 'मैं तुमसे प्यार करता हूँ'], ['Bengali', 'আমি তোমাকে ভালোবাসি'], ['Urdu', 'میں تم سے محبت کرتا ہوں'], ['Punjabi', 'ਮੈਂ ਤੈਨੂੰ ਪਿਆਰ ਕਰਦਾ ਹਾਂ'],
+    ['Tamil', 'நான் உன்னை காதலிக்கிறேன்'], ['Telugu', 'నేను నిన్ను ప్రేమిస్తున్నాను'], ['Malayalam', 'ഞാൻ നിന്നെ സ്നേഹിക്കുന്നു'], ['Nepali', 'म तिमीलाई माया गर्छु'],
+    ['Sinhala', 'මම ඔබට ආදරෙයි'], ['Thai', 'ฉันรักเธอ'], ['Vietnamese', 'Anh yêu em'], ['Khmer', 'ខ្ញុំស្រលាញ់អ្នក'], ['Lao', 'ຂ້ອຍຮັກເຈົ້າ'],
+    ['Burmese', 'ငါမင်းကိုချစ်တယ်'], ['Indonesian', 'Aku cinta kamu'], ['Malay', 'Saya cintakan awak'], ['Filipino', 'Mahal kita'], ['Chinese', '我爱你'],
+    ['Japanese', '愛してる'], ['Korean', '사랑해'], ['Mongolian', 'Би чамд хайртай'], ['Kazakh', 'Мен сені сүйемін'], ['Uzbek', 'Men seni sevaman'],
+    ['Tajik', 'Ман туро дӯст медорам'], ['Swahili', 'Nakupenda'], ['Zulu', 'Ngiyakuthanda'], ['Afrikaans', 'Ek is lief vir jou'], ['Amharic', 'እወድሻለሁ'],
+    ['Yoruba', 'Mo nifẹ rẹ'], ['Hausa', 'Ina sonki'], ['Somali', 'Waan ku jeclahay'], ['Hawaiian', 'Aloha au iā ʻoe'], ['Maori', 'Kei te aroha au ki a koe'],
+    ['Samoan', 'Ou te alofa ia te oe']
+  ];
+  const shuffled = a => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+
+  // ---------- Layout ----------
+  let W = 0, H = 0, DPR = 1, S = 1, OX = 0, OY = 0, cakeImg = null;
+  const DW = 700, DH = 900;                                   // the cake is drawn in a 700 x 900 design space
+  const P = (x, y) => [OX + x * S, OY + y * S];
+
+  // ---------- Audio ----------
+  let ac = null, noiseBuf = null, song = null, pending = null;
+  // A song placed next to this page is found automatically: music.mp3 (or music.m4a, music.ogg, song.mp3, song.m4a)
+  function findSong(names) {
+    const n = names.shift(); if (!n) { pending = null; return; }
+    const a = new Audio(); a.loop = true; a.volume = 0.8; a.preload = 'auto'; pending = a;
+    a.addEventListener('error', () => findSong(names), { once: true });
+    a.addEventListener('canplaythrough', () => { $('songbtn').textContent = '🎵 ' + n; }, { once: true });
+    a.src = n;
+  }
+  const audio = () => {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    if (!ac) { ac = new AC(); noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
+    if (ac.state === 'suspended') ac.resume(); return ac;
+  };
+  function noise(type, f0, f1, dur, vol) {
+    const a = audio(); if (!a) return; const t = a.currentTime;
+    const s = a.createBufferSource(); s.buffer = noiseBuf; const f = a.createBiquadFilter(), g = a.createGain();
+    f.type = type; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f).connect(g).connect(a.destination); s.start(t, rnd(0, 1)); s.stop(t + dur + 0.05);
+  }
+  function tone(f0, f1, dur, type, vol, at) {
+    const a = audio(); if (!a) return; const t = a.currentTime + (at || 0), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.05);
+  }
+  const boom = big => { noise('lowpass', big ? 1400 : 900, 60, big ? 1.6 : 0.9, big ? 1.0 : 0.6); tone(big ? 110 : 140, 30, big ? 1.1 : 0.6, 'sine', big ? 0.9 : 0.5); };
+  const crackle = () => { for (let i = 0; i < 6; i++) setTimeout(() => noise('highpass', 3000, 6000, 0.05, 0.25), i * rnd(40, 110)); };
+  const whoosh = () => noise('bandpass', 500, 3000, 0.7, 0.3);
+  const puff = () => noise('highpass', 1400, 700, 0.3, 0.35);
+  function happyBirthday() {
+    const N = { G4: 392, A4: 440, B4: 493.88, C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99 }, beat = 0.46;
+    const seq = [['G4', .75], ['G4', .25], ['A4', 1], ['G4', 1], ['C5', 1], ['B4', 2], ['G4', .75], ['G4', .25], ['A4', 1], ['G4', 1], ['D5', 1], ['C5', 2],
+      ['G4', .75], ['G4', .25], ['G5', 1], ['E5', 1], ['C5', 1], ['B4', 1], ['A4', 1], ['F5', .75], ['F5', .25], ['E5', 1], ['C5', 1], ['D5', 1], ['C5', 2]];
+    let at = 0.2; seq.forEach(([n, b]) => { tone(N[n], N[n] * 0.999, b * beat * 0.95, 'triangle', 0.22, at); at += b * beat; });
+  }
+
+  // ---------- Particles ----------
+  let parts = [], gal = [], flash = 0, stars = [];
+  function makeStars() { stars = Array.from({ length: 140 }, () => ({ x: Math.random(), y: Math.random(), r: rnd(0.4, 1.5), p: Math.random() * 6.28, s: rnd(0.8, 2.4) })); }
+  function burst(x, y, n, speed, hues, life) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 6.283, sp = speed * (0.25 + Math.random() * 0.85);
+      parts.push({ x, y, px: x, py: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, t: 0, max: rnd(1.1, 2.2) * (life || 1), h: hues[Math.floor(Math.random() * hues.length)] + rnd(-12, 12), l: rnd(60, 88), g: 0.045, w: rnd(1, 2.4), smoke: false });
+    }
+  }
+  function galaxy(x, y, R) {
+    gal = [];
+    for (let i = 0; i < 1500; i++) {
+      const arm = i % 3, u = Math.pow(Math.random(), 0.7);
+      gal.push({ cx: x, cy: y, ang: arm * 2.094 + u * 4.5 + rnd(-0.22, 0.22), rad: 0, spd: (0.25 + u * 1.15) * R / 150, spin: rnd(0.004, 0.012) * (1.3 - u), u, t: 0, max: rnd(3.2, 5.2) });
+    }
+  }
+  function smoke(x, y) { for (let i = 0; i < 7; i++) parts.push({ x: x + rnd(-2, 2), y, px: x, py: y, vx: rnd(-0.25, 0.25), vy: rnd(-0.9, -0.4), t: 0, max: rnd(1.2, 2), h: 0, l: 80, g: -0.003, w: rnd(2, 4), smoke: true }); }
+
+  // ---------- Cake (drawn once into an offscreen canvas in design space) ----------
+  const TIERS = [   // x0, x1, top y, bottom y, colors
+    { x0: 70, x1: 630, yt: 600, yb: 760, fs: 21, cols: ['#ff9ec7', '#ffc2dd', '#ff7fb5', '#ffd6e8'], base: '#7a1d4a', icing: ['#fff0f6', '#ffb8d6'] },
+    { x0: 130, x1: 570, yt: 440, yb: 600, fs: 19, cols: ['#fff1c9', '#ffe29a', '#fff7e0', '#ffd27a'], base: '#6a4a14', icing: ['#fffaf0', '#ffe3a0'] },
+    { x0: 190, x1: 510, yt: 290, yb: 440, fs: 17, cols: ['#c9b6ff', '#e2d6ff', '#a98bff', '#f0e9ff'], base: '#3b2275', icing: ['#f6f1ff', '#cdbcff'] }
+  ];
+  function buildCake() {
+    const k = S * DPR; cakeImg = document.createElement('canvas'); cakeImg.width = Math.ceil(DW * k); cakeImg.height = Math.ceil(DH * k);
+    const g = cakeImg.getContext('2d'); g.setTransform(k, 0, 0, k, 0, 0); g.textBaseline = 'middle';
+    // plate
+    g.fillStyle = 'rgba(200, 210, 255, .22)'; g.beginPath(); g.ellipse(350, 782, 330, 62, 0, 0, 6.283); g.fill();
+    g.strokeStyle = 'rgba(220, 228, 255, .6)'; g.lineWidth = 3; g.stroke();
+    TIERS.forEach(T => {
+      const cx = (T.x0 + T.x1) / 2, rx = (T.x1 - T.x0) / 2, ry = rx * 0.16, order = shuffled(LANGS.map(l => l[1]));
+      g.save(); g.beginPath(); g.moveTo(T.x0, T.yt); g.lineTo(T.x0, T.yb); g.ellipse(cx, T.yb, rx, ry, 0, Math.PI, 0, true); g.lineTo(T.x1, T.yt); g.closePath(); g.clip();
+      g.fillStyle = T.base; g.fillRect(T.x0 - 5, T.yt - ry, rx * 2 + 10, T.yb - T.yt + ry * 2 + 5);
+      g.font = '600 ' + T.fs + 'px Fredoka, system-ui, sans-serif'; let idx = 0;
+      for (let y = T.yt - ry + T.fs * 0.6, row = 0; y < T.yb + ry + T.fs; y += T.fs * 1.3, row++) {
+        let x = T.x0 - rnd(0, 70); g.fillStyle = T.cols[row % T.cols.length];
+        while (x < T.x1) { const txt = order[idx++ % order.length]; g.fillText(txt, x, y); x += g.measureText(txt).width + 16; }
+      }
+      const sh = g.createLinearGradient(T.x0, 0, T.x1, 0);   // round shading so it reads as a cylinder
+      sh.addColorStop(0, 'rgba(0,0,0,.6)'); sh.addColorStop(0.25, 'rgba(0,0,0,0)'); sh.addColorStop(0.7, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.65)');
+      g.fillStyle = sh; g.fillRect(T.x0 - 5, T.yt - ry, rx * 2 + 10, T.yb - T.yt + ry * 2 + 5);
+      g.restore();
+      const ic = g.createRadialGradient(cx, T.yt, 5, cx, T.yt, rx);   // icing surface on top of the tier
+      ic.addColorStop(0, T.icing[0]); ic.addColorStop(1, T.icing[1]);
+      g.fillStyle = ic; g.beginPath(); g.ellipse(cx, T.yt, rx, ry, 0, 0, 6.283); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 2; g.stroke();
+    });
+  }
+
+  // 20 candles in two rings on the top tier
+  const CAND = [];
+  function buildCandles() {
+    CAND.length = 0; const cx = 350, cy = 290;
+    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283 + 0.2; CAND.push({ x: cx + 128 * Math.cos(a), y: cy + 21 * Math.sin(a) }); }
+    for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283 + 0.5; CAND.push({ x: cx + 62 * Math.cos(a), y: cy + 10 * Math.sin(a) }); }
+    CAND.forEach((c, i) => { c.lit = true; c.i = i; c.col = ['#ff9ec7', '#ffffff', '#9ec9ff', '#ffe29a'][i % 4]; c.t0 = 3.2 + i * 0.09; });
+    CAND.sort((a, b) => a.y - b.y);
+  }
+
+  // ---------- Story ----------
+  let stage = 'intro', t0 = 0, last = 0, fired = {}, left = 20, finaleAt = 0, spawnIdx = 0, floaters = [], order = [], endShown = false;
+  const hint = $('hint'), skipBtn = $('skip'), finalEl = $('final');
+  const now = () => performance.now() / 1000;
+
+  function startShow() {
+    stage = 'fire'; t0 = now(); fired = {}; parts = []; gal = []; floaters = []; spawnIdx = 0; left = 20; endShown = false; flash = 0;
+    buildCandles(); order = shuffled(LANGS);
+    hint.classList.remove('on'); skipBtn.classList.remove('on'); finalEl.classList.remove('on');
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.fillStyle = '#02040f'; ctx.fillRect(0, 0, W, H);
+  }
+  function at(t, name, fn) { if (!fired[name] && (now() - t0) >= t) { fired[name] = true; fn(); } }
+
+  function blow(x, y) {
+    const lit = CAND.filter(c => c.lit); if (!lit.length) return;
+    const [dx, dy] = [(x - OX) / S, (y - OY) / S];
+    let target = null, best = 1e9;
+    lit.forEach(c => { const d = Math.hypot(c.x - dx, (c.y - 24) - dy); if (d < best) { best = d; target = c; } });
+    if (best > 70) target = lit[Math.floor(Math.random() * lit.length)];     // a tap away from the candles still blows one out
+    target.lit = false; left--; puff(); whoosh();
+    const [sx, sy] = P(target.x, target.y - 46); smoke(sx, sy);
+    hint.textContent = left > 0 ? '🕯️ ' + left + ' left. Tap to blow one out' : '✨ Make a wish ✨';
+    if (left === 0) { stage = 'wish'; finaleAt = now() + 2.2; }
+  }
+
+  function beginPhrases() {
+    stage = 'phrases'; t0 = now(); hint.classList.remove('on'); skipBtn.classList.add('on'); spawnIdx = 0;
+    if (!song) happyBirthday();
+  }
+  function showEnd() {
+    if (endShown) return; endShown = true; stage = 'end'; skipBtn.classList.remove('on'); finalEl.classList.add('on'); floaters = [];
+  }
+
+  // ---------- Frame ----------
+  function drawBackground(alpha) {
+    const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#02040f'); g.addColorStop(1, '#0a1650');
+    ctx.globalAlpha = alpha; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+  }
+  function drawStars(t, a) {
+    ctx.fillStyle = '#fff';
+    stars.forEach(s => { ctx.globalAlpha = a * (0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.s + s.p))); ctx.fillRect(s.x * W, s.y * H, s.r, s.r); });
+    ctx.globalAlpha = 1;
+  }
+  function flare(x, y, k) {                                          // the small white-blue sparkle before the explosion
+    const R = 40 + 80 * k, g = ctx.createRadialGradient(x, y, 0, x, y, R);
+    g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.3, 'rgba(150,190,255,.5)'); g.addColorStop(1, 'rgba(60,90,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    ctx.strokeStyle = 'rgba(230,240,255,' + (0.9 - 0.3 * k) + ')'; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(x - R * 1.4, y); ctx.lineTo(x + R * 1.4, y); ctx.moveTo(x, y - R * 1.4); ctx.lineTo(x, y + R * 1.4); ctx.stroke();
+  }
+
+  function updateParticles(step) {
+    parts.forEach(p => { p.px = p.x; p.py = p.y; p.vx *= p.smoke ? 1 : 0.985; p.vy += p.g * step; p.x += p.vx * step; p.y += p.vy * step; p.t += step / 60; });
+    parts = parts.filter(p => p.t < p.max);
+    gal.forEach(p => { p.t += step / 60; p.rad += p.spd * step * (1 - clamp(p.t / p.max) * 0.85); p.ang += p.spin * step; });
+    gal = gal.filter(p => p.t < p.max);
+  }
+  function drawParticles() {
+    ctx.globalCompositeOperation = 'lighter';
+    parts.forEach(p => {
+      const a = Math.pow(1 - p.t / p.max, 1.4);
+      if (p.smoke) { ctx.fillStyle = 'rgba(210,215,230,' + a * 0.35 + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.w + p.t * 3, 0, 6.283); ctx.fill(); return; }
+      ctx.strokeStyle = 'hsla(' + p.h + ',100%,' + p.l + '%,' + a + ')'; ctx.lineWidth = p.w; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+    });
+    gal.forEach(p => {
+      const a = Math.pow(1 - p.t / p.max, 1.2), x = p.cx + Math.cos(p.ang) * p.rad, y = p.cy + Math.sin(p.ang) * p.rad * 0.92;
+      const h = 215 + p.u * 120, l = 92 - p.u * 38;
+      ctx.fillStyle = 'hsla(' + h + ',100%,' + l + '%,' + a + ')'; ctx.fillRect(x, y, 2.2, 2.2);
+    });
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function drawCandles(tc) {
+    CAND.forEach(c => {
+      const pop = ease(clamp((tc - c.t0) / 0.5)); if (pop <= 0) return;
+      const [sx, sy] = P(c.x, c.y), h = 44 * S * pop, w = 7 * S;
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(sx, sy, w * 1.1, w * 0.4, 0, 0, 6.283); ctx.fill();
+      ctx.fillStyle = c.col; ctx.fillRect(sx - w / 2, sy - h, w, h);
+      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sx - w / 2, sy - h, w * 0.3, h);
+      if (c.lit && pop > 0.9) {                                               // flame with a soft glow
+        const fl = 1 + 0.18 * Math.sin(tc * 14 + c.i * 1.7), fy = sy - h - 9 * S * fl;
+        const g = ctx.createRadialGradient(sx, fy, 0, sx, fy, 30 * S); g.addColorStop(0, 'rgba(255,220,120,.55)'); g.addColorStop(1, 'rgba(255,160,40,0)');
+        ctx.fillStyle = g; ctx.fillRect(sx - 30 * S, fy - 30 * S, 60 * S, 60 * S);
+        ctx.fillStyle = '#ffb340'; ctx.beginPath(); ctx.ellipse(sx, fy, 4.2 * S, 9 * S * fl, 0, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#fff6c9'; ctx.beginPath(); ctx.ellipse(sx, fy + 2 * S, 2 * S, 5 * S * fl, 0, 0, 6.283); ctx.fill();
+      } else if (!c.lit) { ctx.fillStyle = '#2a1a1a'; ctx.fillRect(sx - 0.8 * S, sy - h - 3 * S, 1.6 * S, 3 * S); }
+    });
+  }
+
+  function spawnFloater(i) {
+    const [lang, txt] = order[i % order.length], fs = clamp(Math.min(W, H) * 0.085, 30, 64);
+    floaters.push({ lang, txt, x: W / 2 + rnd(-0.22, 0.22) * W, y: H * rnd(0.36, 0.54), t: 0, h: [330, 20, 45, 190, 270, 150][i % 6], fs });
+  }
+  function drawFloaters(dt) {
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    floaters.forEach(f => {
+      f.t += dt; const a = f.t < 0.6 ? f.t / 0.6 : f.t < 1.7 ? 1 : 1 - (f.t - 1.7) / 1.0;
+      if (a <= 0) return; const rise = f.t > 1.7 ? (f.t - 1.7) * 70 : 0, sc = f.t < 0.6 ? 0.7 + 0.3 * ease(f.t / 0.6) : 1 + (f.t > 1.7 ? (f.t - 1.7) * 0.12 : 0);
+      ctx.save(); ctx.translate(f.x, f.y - rise); ctx.scale(sc, sc); ctx.globalAlpha = clamp(a);
+      ctx.shadowColor = 'hsl(' + f.h + ',100%,65%)'; ctx.shadowBlur = 22; ctx.fillStyle = 'hsl(' + f.h + ',100%,86%)';
+      ctx.font = '600 ' + f.fs + 'px Fredoka, system-ui, sans-serif'; ctx.fillText(f.txt, 0, 0);
+      ctx.shadowBlur = 0; ctx.globalAlpha = clamp(a) * 0.7; ctx.fillStyle = '#ffd9e8'; ctx.font = '400 ' + f.fs * 0.34 + 'px Fredoka, system-ui, sans-serif'; ctx.fillText(f.lang, 0, f.fs * 0.78);
+      ctx.restore();
+    });
+    floaters = floaters.filter(f => f.t < 2.8); ctx.globalAlpha = 1;
+  }
+
+  function frame() {
+    const tn = now(), dt = Math.min(0.05, tn - last || 0.016), step = dt * 60; last = tn;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const t = tn - t0;
+    if (stage === 'intro') { drawBackground(1); drawStars(tn, 1); requestAnimationFrame(frame); return; }
+
+    if (stage === 'fire') {
+      drawBackground(0.22);                                           // soft fade leaves the light trails
+      drawStars(tn, 0.7);
+      const cx = W / 2, cy = H * 0.38, R = Math.min(W, H) * 0.55;
+      if (t > 0.8 && t < 2.6) {                                          // a spark climbs
+        const k = ease(clamp((t - 0.8) / 1.8)), x = cx + Math.sin(k * 9) * 6, y = H + 20 + (cy - H - 20) * k;
+        parts.push({ x, y, px: x, py: y + 8, vx: rnd(-0.3, 0.3), vy: rnd(0.5, 1.5), t: 0, max: 0.6, h: 40, l: 80, g: 0.02, w: 1.6, smoke: false });
+        ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(255,240,200,.9)'; ctx.beginPath(); ctx.arc(x, y, 3.2, 0, 6.283); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+        if (!fired.wh) { fired.wh = true; whoosh(); }
+      }
+      if (t > 2.6 && t < 3.6) flare(cx, cy, clamp((t - 2.6) / 1.0));
+      at(3.6, 'b1', () => { burst(cx, cy, 520, 6.5, [200, 220, 260], 1.3); flash = 1; boom(false); crackle(); });
+      at(4.3, 'g', () => { galaxy(cx, cy, R); flash = 1; boom(true); });
+      [[5.2, 0.25, 0.28, 330], [5.7, 0.78, 0.3, 190], [6.2, 0.5, 0.2, 45], [6.7, 0.2, 0.5, 280], [7.1, 0.8, 0.52, 150]].forEach(([tt, fx, fy, hue], i) =>
+        at(tt, 'm' + i, () => { burst(W * fx, H * fy, 160, 4.2, [hue, hue + 25], 1); boom(false); crackle(); }));
+      if (t > 8.2) { stage = 'cake'; t0 = tn; hint.textContent = '🕯️ 20 left. Tap to blow one out'; }
+    } else {
+      drawBackground(1); drawStars(tn, 0.8);
+    }
+
+    if (stage === 'cake' || stage === 'wish' || stage === 'phrases' || stage === 'end') {
+      const tc = tn - t0, dimK = stage === 'phrases' || stage === 'end' ? 0.22 : 1;
+      const prog = stage === 'cake' ? clamp(tc / 3) : 1;
+      const g = ctx.createRadialGradient(W / 2, OY + 420 * S, 10, W / 2, OY + 420 * S, 480 * S);
+      g.addColorStop(0, 'rgba(255,170,210,' + 0.2 * dimK + ')'); g.addColorStop(1, 'rgba(255,170,210,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      if (cakeImg) {
+        ctx.globalAlpha = dimK;
+        const sh = cakeImg.height;                                   // the cake rises from the plate: reveal from the bottom up
+        const vis = Math.floor(sh * ease(prog)), srcY = sh - vis;
+        if (vis > 0) ctx.drawImage(cakeImg, 0, srcY, cakeImg.width, vis, OX, OY + srcY / DPR, DW * S, vis / DPR);
+        ctx.globalAlpha = 1;
+      }
+      if (stage === 'cake' || stage === 'wish') {
+        drawCandles(stage === 'cake' ? tc : 99);
+        if (stage === 'cake' && tc > 5.2 && !hint.classList.contains('on')) hint.classList.add('on');
+      }
+      if (stage === 'wish' && tn >= finaleAt) beginPhrases();
+      if (stage === 'phrases') {
+        const tp = tn - t0;
+        while (spawnIdx < order.length && tp >= spawnIdx * 0.6) spawnFloater(spawnIdx++);
+        drawFloaters(dt);
+        if (spawnIdx >= order.length && !floaters.length) showEnd();
+              }
+      if (stage === 'end') {
+        if (Math.random() < 0.03) { const x = rnd(0.15, 0.85) * W, y = rnd(0.15, 0.6) * H; burst(x, y, 120, 3.8, [rnd(0, 360)], 1); boom(false); }
+      }
+    }
+    if (flash > 0) { ctx.fillStyle = 'rgba(255,255,255,' + flash * 0.3 + ')'; ctx.fillRect(0, 0, W, H); flash = Math.max(0, flash - dt * 1.4); }
+    updateParticles(step); drawParticles();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- Input ----------
+  function resize() {
+    DPR = Math.min(2, window.devicePixelRatio || 1); W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.floor(W * DPR); cv.height = Math.floor(H * DPR); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    S = Math.min(W / DW, H / DH); OX = (W - DW * S) / 2; OY = (H - DH * S) / 2; buildCake();
+  }
+  window.addEventListener('resize', resize);
+  cv.addEventListener('pointerdown', e => { if (stage === 'cake' && now() - t0 > 4.8) blow(e.clientX, e.clientY); });
+  $('begin').addEventListener('click', () => {
+    audio(); $('intro').classList.add('gone');
+    const a = song || pending;                                      // the user's own song, or the one found next to this page
+    if (a) a.play().then(() => { song = a; }).catch(() => {});
+    startShow();
+  });
+  $('songbtn').addEventListener('click', () => $('song').click());
+  $('song').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    if (song) song.pause(); song = new Audio(URL.createObjectURL(f)); song.loop = true; song.volume = 0.8;
+    $('songbtn').textContent = '🎵 ' + f.name.slice(0, 22); if (stage !== 'intro') song.play().catch(() => {});
+  });
+  $('skip').addEventListener('click', () => { floaters = []; showEnd(); });
+  $('replay').addEventListener('click', () => { finalEl.classList.remove('on'); startShow(); });
+
+  findSong(['music.mp3', 'music.m4a', 'music.ogg', 'song.mp3', 'song.m4a']);
+  makeStars(); resize(); buildCandles();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(buildCake);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
